@@ -6,13 +6,13 @@ namespace API.Socket.Callback.Server
     public abstract class Callback<T> where T : class
     {
         private ServerBase server;
+
+        protected abstract void InitCallback();
+
         public Callback(ServerBase server) 
         {
             this.server = server;
-            InitCallback();
         }
-
-        protected abstract void InitCallback();
 
         protected void BindCallback(int protocol, T funtion)
         {

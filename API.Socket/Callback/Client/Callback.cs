@@ -6,14 +6,14 @@ namespace API.Socket.Callback.Client
     public abstract class Callback<T> where T : class
     {
         private ClientBase clientSocket;
-        
+
+        protected abstract void InitCallback();
+
         public Callback(ClientBase clientSocket)
         {
             this.clientSocket = clientSocket;
-            InitCallback();
         }
 
-        protected abstract void InitCallback();
         protected void BindCallback(int protocol, T funtion)
         {
             clientSocket.BindCallback(protocol, funtion);
