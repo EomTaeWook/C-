@@ -49,8 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Callback\Client\Callback.cs" />
-    <Compile Include="Callback\Server\Callback.cs" />
+    <Compile Include="Callback\Client\ICallback.cs" />
+    <Compile Include="Callback\Server\ICallback.cs" />
     <Compile Include="ClientSocket\ClientBase.cs" />
     <Compile Include="ClientSocket\AsyncClientSocket.cs" />
     <Compile Include="Data\Enum\MsgType.cs" />
