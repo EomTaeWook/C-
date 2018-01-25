@@ -3,17 +3,15 @@ using System.Text;
 
 namespace API.Socket.Callback.Client
 {
-    public abstract class Callback<T> where T : class
+    public abstract class ICallback<T> where T : class
     {
-        private ClientBase clientSocket;
-
+        protected ClientBase clientSocket;
         protected abstract void InitCallback();
 
-        public Callback(ClientBase clientSocket)
+        public ICallback(ClientBase clientSocket)
         {
             this.clientSocket = clientSocket;
         }
-
         protected void BindCallback(int protocol, T funtion)
         {
             clientSocket.BindCallback(protocol, funtion);

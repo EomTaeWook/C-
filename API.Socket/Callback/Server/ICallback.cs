@@ -3,17 +3,15 @@ using System;
 
 namespace API.Socket.Callback.Server
 {
-    public abstract class Callback<T> where T : class
+    public abstract class ICallback<T> where T : class
     {
-        private ServerBase server;
-
+        protected ServerBase server;
         protected abstract void InitCallback();
 
-        public Callback(ServerBase server) 
+        public ICallback(ServerBase server) 
         {
             this.server = server;
         }
-
         protected void BindCallback(int protocol, T funtion)
         {
             server.BindCallback(protocol, funtion);
