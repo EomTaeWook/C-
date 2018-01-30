@@ -6,8 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace API.Socket.Data
-{
+namespace API.Util
+{ 
     public class DoubleBuffer<T>
     {
         BufferQueue<T>[] buffer;

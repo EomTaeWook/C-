@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace API.Socket.Data
+namespace API.Util
 {
     public class BufferQueue<T> : IDisposable
     {

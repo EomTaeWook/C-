@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace API.Socket.Data
+namespace API.Util
 {
     public class MemoryPool<T> : IDisposable where T : IDisposable, new()
     {
