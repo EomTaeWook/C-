@@ -1,23 +1,18 @@
 ﻿using API.Socket.Data;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
 
 namespace API.Socket
 {
     public abstract class ClientBase
     {
-        private FunctionMap functionMap;
-        
+        private FunctionMap _functionMap;
+
         #region abstract
         protected abstract void ConnectCompleteEvent(StateObject state);
         public abstract void Send(int protocol, byte[] data);
         protected abstract void DisconnectedEvent();
         protected abstract void ClosePeer();
-        public virtual void Close() { functionMap.Clear(); functionMap = null; }
+        public virtual void Close() { _functionMap.Clear(); _functionMap = null; }
         public abstract void Connect(string ip, int port, int timeout = 5000);
         protected virtual bool PacketConversionComplete(Data.Packet.Packet packet, out object[] arg)
         {
@@ -30,15 +25,15 @@ namespace API.Socket
 
         public ClientBase()
         {
-            functionMap = new FunctionMap();
+            _functionMap = new FunctionMap();
         }
         public void BindCallback(int protocol, Action<Data.Packet.Packet> func)
         {
-            functionMap.BindCallback(protocol, func);
+            _functionMap.BindCallback(protocol, func);
         }
         protected bool FindKey(int key)
         {
-            return functionMap.FindKey(key);
+            return _functionMap.FindKey(key);
         }
         public void BindCallback<T>(int protocol, T func)
         {
@@ -46,7 +41,7 @@ namespace API.Socket
             {
                 if (func.GetType().GenericTypeArguments[0].Equals(Type.GetType("API.Socket.Data.Packet.Packet")))
                 {
-                    functionMap.BindCallback(protocol, func);
+                    _functionMap.BindCallback(protocol, func);
                 }
                 else
                 {
@@ -60,7 +55,7 @@ namespace API.Socket
         }
         protected void RunCallbackFunc(int protocol, Data.Packet.Packet packet)
         {
-            functionMap.RunCallback(protocol, packet);
+            _functionMap.RunCallback(protocol, packet);
         }
     }
 }

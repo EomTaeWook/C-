@@ -12,9 +12,9 @@ namespace API.Socket
 {
     public abstract class AsyncClientSocket : ClientBase
     {
-        private StateObject stateObject;
-        private IPEndPoint remoteEP;
-        private SocketAsyncEventArgs receive_Args;
+        private StateObject _stateObject;
+        private IPEndPoint _remoteEP;
+        private SocketAsyncEventArgs _receive_Args;
         private string ip;
         private int port;
         public AsyncClientSocket()
@@ -24,7 +24,7 @@ namespace API.Socket
         public sealed override void Close()
         {
             ClosePeer();
-            stateObject.Dispose();
+            _stateObject.Dispose();
             base.Close();
         }
         protected override void ClosePeer()
@@ -34,10 +34,10 @@ namespace API.Socket
                 try
                 {
                     Monitor.Enter(this);
-                    if (receive_Args != null)
+                    if (_receive_Args != null)
                     {
-                        receive_Args.SocketError = SocketError.Shutdown;
-                        stateObject.Init();
+                        _receive_Args.SocketError = SocketError.Shutdown;
+                        _stateObject.Init();
                     }
                 }
                 finally
@@ -45,7 +45,7 @@ namespace API.Socket
                     Monitor.Exit(this);
                 }
             }
-            catch(Exception.Exception ex)
+            catch (Exception.Exception ex)
             {
                 Debug.WriteLine(ex.Message);
             }
@@ -64,7 +64,7 @@ namespace API.Socket
         {
             try
             {
-                if (stateObject.WorkSocket == null)
+                if (_stateObject.WorkSocket == null)
                 {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
                 }
@@ -74,7 +74,7 @@ namespace API.Socket
                 packet.GetHeader().Protocol = Convert.ToUInt16(protocol);
                 packet.GetHeader().DataSize = (UInt32)data.Length;
                 packet.Data = data;
-                stateObject.Send(packet);
+                _stateObject.Send(packet);
             }
             catch (Exception.Exception ex)
             {
@@ -91,12 +91,12 @@ namespace API.Socket
         {
             try
             {
-                if (stateObject.WorkSocket == null)
+                if (_stateObject.WorkSocket == null)
                 {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
                 }
                 if (packet == null) return;
-                stateObject.Send(packet);
+                _stateObject.Send(packet);
             }
             catch (Exception.Exception ex)
             {
@@ -113,11 +113,11 @@ namespace API.Socket
         {
             try
             {
-                stateObject = new StateObject();
-                receive_Args = new SocketAsyncEventArgs();
-                receive_Args.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
-                receive_Args.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
-                receive_Args.UserToken = stateObject;
+                _stateObject = new StateObject();
+                _receive_Args = new SocketAsyncEventArgs();
+                _receive_Args.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
+                _receive_Args.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
+                _receive_Args.UserToken = _stateObject;
             }
             catch (System.Exception ex)
             {
@@ -127,7 +127,7 @@ namespace API.Socket
         }
         protected void ReConnect(int timeout = 5000)
         {
-            Connect(ip, port,timeout);
+            Connect(ip, port, timeout);
         }
         public override void Connect(string ip, int port, int timeout = 5000)
         {
@@ -135,22 +135,22 @@ namespace API.Socket
             {
                 this.ip = ip;
                 this.port = port;
-                remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
-                if (stateObject.WorkSocket == null)
+                _remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
+                if (_stateObject.WorkSocket == null)
                 {
                     System.Net.Sockets.Socket handler = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    IAsyncResult asyncResult = handler.BeginConnect(remoteEP, null, null);
+                    IAsyncResult asyncResult = handler.BeginConnect(_remoteEP, null, null);
                     if (asyncResult.AsyncWaitHandle.WaitOne(timeout, true))
                     {
                         handler.EndConnect(asyncResult);
-                        StateObject state = (StateObject)receive_Args.UserToken;
+                        StateObject state = (StateObject)_receive_Args.UserToken;
                         state.WorkSocket = handler;
                         BeginReceive(state);
                         ConnectCompleteEvent(state);
                     }
                     else
                     {
-                        stateObject.Init();
+                        _stateObject.Init();
                         throw new SocketException(10060);
                     }
                 }
@@ -173,17 +173,17 @@ namespace API.Socket
         }
         private void BeginReceive(StateObject state)
         {
-            stateObject.ReceiveAsync = receive_Args;
+            _stateObject.ReceiveAsync = _receive_Args;
             if (state.WorkSocket != null)
             {
-                bool pending = state.WorkSocket.ReceiveAsync(receive_Args);
+                bool pending = state.WorkSocket.ReceiveAsync(_receive_Args);
                 if (!pending)
                 {
-                    Process_Receive(receive_Args);
+                    Process_Receive(_receive_Args);
                 }
             }
         }
-        
+
         private void Receive_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.LastOperation == SocketAsyncOperation.Receive)
@@ -236,7 +236,7 @@ namespace API.Socket
                     ClosePeer();
                 }
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 ClosePeer();
                 Debug.WriteLine("Process_Receive : " + ex.Message);
@@ -285,7 +285,7 @@ namespace API.Socket
         }
         private void BeginWork(StateObject state)
         {
-            while(state.PacketQueue.Count() > 0)
+            while (state.PacketQueue.Count() > 0)
             {
                 Packet packet = state.PacketQueue.Read();
                 ThreadPool.QueueUserWorkItem(new WaitCallback(Work), packet);
@@ -293,9 +293,9 @@ namespace API.Socket
         }
         public bool IsConnect()
         {
-            if (stateObject == null) return false;
-            if (stateObject.WorkSocket == null) return false;
-            return stateObject.WorkSocket.Connected;
+            if (_stateObject == null) return false;
+            if (_stateObject.WorkSocket == null) return false;
+            return _stateObject.WorkSocket.Connected;
         }
     }
 }

@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace API.Socket.Exception
 {
     public class Exception : System.Exception
     {
-        private int errorCode = 0;
-        private string message;
-        private string functionName = "";
+        private int _errorCode = 0;
+        private string _message;
+        private string _functionName = "";
         public Exception(string message, [CallerMemberName] string functionName = "") : this(-1, message, functionName)
         {
         }
@@ -22,19 +16,18 @@ namespace API.Socket.Exception
         }
         public Exception(int errorCode, string message, [CallerMemberName] string functionName = "")
         {
-            this.errorCode = errorCode;
-            //this.message = "ErrorCode : " + this.errorCode + " Function : " + functionName + " message : " + message;
-            this.message = message;
-            this.functionName = functionName;
-            Debug.WriteLine(this.message);
+            _errorCode = errorCode;
+            _message = message;
+            _functionName = functionName;
+            Debug.WriteLine(_message);
         }
         public string GetErrorMessage()
         {
-            return "ErrorCode : " + this.errorCode + " Function : " + functionName + " message : " + message;
+            return "ErrorCode : " + _errorCode + " Function : " + _functionName + " message : " + _message;
         }
 
-        public int ErrorCode { get => errorCode; }
-        public override string Message { get => this.message; }
-        public string FunctionName { get => functionName; set => functionName = value; }
+        public int ErrorCode { get => _errorCode; }
+        public override string Message { get => _message; }
+        public string FunctionName { get => _functionName; set => _functionName = value; }
     }
 }

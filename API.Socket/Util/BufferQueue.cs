@@ -7,77 +7,77 @@ namespace API.Util
 {
     public class BufferQueue<T> : IDisposable
     {
-        private Queue<T> queue;
-        private readonly object append, read;
+        private Queue<T> _queue;
+        private readonly object _append, _read;
         public BufferQueue()
         {
-            append = new object();
-            read = new object();
-            queue = new Queue<T>();
+            _append = new object();
+            _read = new object();
+            _queue = new Queue<T>();
         }
         public void Append(T data)
         {
             try
             {
-                Monitor.Enter(append);
-                queue.Enqueue(data);
+                Monitor.Enter(_append);
+                _queue.Enqueue(data);
             }
             finally
             {
-                Monitor.Exit(append);
+                Monitor.Exit(_append);
             }
         }
         public void Append(T[] data)
         {
             try
             {
-                Monitor.Enter(append);
+                Monitor.Enter(_append);
                 for (int i = 0; i < data.Length; i++)
                 {
-                    queue.Enqueue(data[i]);
+                    _queue.Enqueue(data[i]);
                 }
             }
             finally
             {
-                Monitor.Exit(append);
+                Monitor.Exit(_append);
             }
         }
         public T Peek()
         {
             try
             {
-                Monitor.Enter(read);
-                if (queue.Count < 1)
+                Monitor.Enter(_read);
+                if (_queue.Count < 1)
                 {
                     throw new IndexOutOfRangeException();
                 }
-                var b = queue.Peek();
-                Monitor.Exit(read);
+                var b = _queue.Peek();
+                Monitor.Exit(_read);
                 return b;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Monitor.Exit(read);
-                throw new System.Exception(ex.Message, ex);
+                Monitor.Exit(_read);
+                throw new Exception(ex.Message, ex);
             }
         }
         public T[] Peek(int offset, int length)
         {
             try
             {
-                Monitor.Enter(read);
-                if (queue.Count < offset + length)
+                Monitor.Enter(_read);
+                if (_queue.Count < offset + length)
                 {
                     throw new IndexOutOfRangeException();
                 }
-                var b = queue.Skip(offset).Take(length).ToArray();
-                Monitor.Exit(read);
+                var b = _queue.Skip(offset).Take(length).ToArray();
+                Monitor.Exit(_read);
                 return b;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Monitor.Exit(read);
-                throw new System.Exception(ex.Message, ex);
+                Monitor.Exit(_read);
+                throw new Exception(ex.Message, ex);
             }
         }
         public T Read()
@@ -85,16 +85,16 @@ namespace API.Util
             T data;
             try
             {
-                Monitor.Enter(read);
-                if (queue.Count == 0)
+                Monitor.Enter(_read);
+                if (_queue.Count == 0)
                 {
                     throw new IndexOutOfRangeException();
                 }
-                data = queue.Dequeue();
+                data = _queue.Dequeue();
             }
             finally
             {
-                Monitor.Exit(read);
+                Monitor.Exit(_read);
             }
             return data;
         }
@@ -103,33 +103,33 @@ namespace API.Util
             T[] data = null;
             try
             {
-                Monitor.Enter(read);
-                if (queue.Count < size)
+                Monitor.Enter(_read);
+                if (_queue.Count < size)
                 {
                     throw new IndexOutOfRangeException();
                 }
                 data = new T[size];
                 for (int i = 0; i < size; i++)
                 {
-                    data[i] = queue.Dequeue();
+                    data[i] = _queue.Dequeue();
                 }
             }
             finally
             {
-                Monitor.Exit(read);
+                Monitor.Exit(_read);
             }
             return data;
         }
         public int Count()
         {
-            return queue.Count;
+            return _queue.Count;
         }
         public void Clear()
         {
             try
             {
                 Monitor.Enter(this);
-                queue.Clear();
+                _queue.Clear();
             }
             finally
             {
@@ -141,8 +141,8 @@ namespace API.Util
             try
             {
                 Monitor.Enter(this);
-                queue.Clear();
-                queue = null;
+                _queue.Clear();
+                _queue = null;
                 IsDisposable = true;
             }
             finally

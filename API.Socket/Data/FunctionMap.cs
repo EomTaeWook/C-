@@ -6,11 +6,11 @@ namespace API.Socket.Data
 {
     public class ServerFunctionMap
     {
-        private Dictionary<int, Delegate> funcList;
-        
+        private Dictionary<int, Delegate> _funcList;
+
         public ServerFunctionMap()
         {
-            funcList = new Dictionary<int, Delegate>();
+            _funcList = new Dictionary<int, Delegate>();
         }
         public void BindCallback<T>(int protocol, T func)
         {
@@ -22,7 +22,7 @@ namespace API.Socket.Data
                 {
                     throw new Exception.Exception("Function Not Delegate Type");
                 }
-                funcList.Add(protocol, action);
+                _funcList.Add(protocol, action);
             }
             catch (System.Exception ex)
             {
@@ -31,24 +31,24 @@ namespace API.Socket.Data
         }
         public bool FindKey(int key)
         {
-            return funcList.ContainsKey(key);
+            return _funcList.ContainsKey(key);
         }
         public void Clear()
         {
-            funcList.Clear();
+            _funcList.Clear();
         }
         public void RunCallback(int protocol, Packet.Packet packet, StateObject handler, params object[] arg)
         {
             try
             {
-                object[] o = { packet,  handler};
+                object[] o = { packet, handler };
                 if (arg != null) o = o.Concat(arg).ToArray();
-                funcList[protocol].DynamicInvoke(o);
+                _funcList[protocol].DynamicInvoke(o);
             }
             catch (System.Exception ex)
             {
                 throw new Exception.Exception("protocol : " + protocol + " msg : " + ex.Message);
-            }            
+            }
         }
     }
 

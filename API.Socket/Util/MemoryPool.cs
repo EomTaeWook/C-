@@ -1,69 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace API.Util
 {
     public class MemoryPool<T> : IDisposable where T : IDisposable, new()
     {
-        protected int count;
-        protected Queue<T> pool;
-        protected readonly object append, read;
-        private Func<T> createT;
+        protected int _count;
+        protected Queue<T> _pool;
+        protected readonly object _append, _read;
+        private Func<T> _createT;
         public MemoryPool(int count = 100, bool autoCreate = true, Func<T> func = null)
         {
-            append = new object();
-            read = new object();
-            pool = new Queue<T>(count);
-            this.count = count;
-            if (func == null) createT = () => new T();
-            else createT = func;
+            _append = new object();
+            _read = new object();
+            _pool = new Queue<T>(count);
+            _count = count;
+            if (func == null) _createT = () => new T();
+            else _createT = func;
             if (autoCreate)
             {
-                for (int i = 0; i < this.count; i++)
+                for (int i = 0; i < _count; i++)
                 {
-                    pool.Enqueue(createT());
+                    _pool.Enqueue(_createT());
                 }
             }
         }
         public void Init(int count, Func<T> func)
         {
-            this.count = count;
-            this.createT = func;
-            if (func == null) createT = () => new T();
-            else createT = func;
-            for (int i = 0; i < this.count; i++)
+            _count = count;
+            _createT = func;
+            if (func == null) _createT = () => new T();
+            else _createT = func;
+            for (int i = 0; i < _count; i++)
             {
-                pool.Enqueue(createT());
+                _pool.Enqueue(_createT());
             }
         }
         public T Pop()
         {
             try
             {
-                Monitor.Enter(read);
-                if (pool.Count < 1)
+                Monitor.Enter(_read);
+                if (_pool.Count < 1)
                 {
-                    return createT();
+                    return _createT();
                 }
-                return pool.Dequeue();
+                return _pool.Dequeue();
             }
             finally
             {
-                Monitor.Exit(read);
+                Monitor.Exit(_read);
             }
         }
         public void Push(T data)
         {
             try
             {
-                Monitor.Enter(append);
-                if (pool.Count < count)
+                Monitor.Enter(_append);
+                if (_pool.Count < _count)
                 {
-                    pool.Enqueue(data);
+                    _pool.Enqueue(data);
                 }
                 else
                 {
@@ -73,7 +70,7 @@ namespace API.Util
             }
             finally
             {
-                Monitor.Exit(append);
+                Monitor.Exit(_append);
             }
         }
         public void Dispose()
@@ -81,21 +78,21 @@ namespace API.Util
             try
             {
                 Monitor.Enter(this);
-                for(int i=0; i<pool.Count; i++)
+                for (int i = 0; i < _pool.Count; i++)
                 {
-                    var data = pool.Dequeue();
+                    var data = _pool.Dequeue();
                     data.Dispose();
                     data = default(T);
                 }
-                pool.Clear();
-                pool = null;
+                _pool.Clear();
+                _pool = null;
             }
             finally
             {
                 Monitor.Exit(this);
             }
         }
-        public int CurrentCount { get => pool.Count; }
-        public int Count { get => count; }
+        public int CurrentCount { get => _pool.Count; }
+        public int Count { get => _count; }
     }
 }

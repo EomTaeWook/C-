@@ -1,43 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 
 namespace API.Socket.Data
 {
     public class MutexCount
     {
-        private ulong count = 0;
-        private readonly object mutex;
+        private ulong _count = 0;
+        private readonly object _mutex;
         public MutexCount()
         {
-            mutex = new object();
+            _mutex = new object();
         }
         public ulong CountAdd()
         {
             try
             {
-                Monitor.Enter(mutex);
-                if (count + 1 == 0)
+                Monitor.Enter(_mutex);
+                if (_count + 1 == 0)
                 {
-                    count = 1;
+                    _count = 1;
                 }
                 else
                 {
-                    count++;
+                    _count++;
                 }
             }
             finally
             {
-                Monitor.Exit(mutex);
+                Monitor.Exit(_mutex);
             }
-            return count;
+            return _count;
         }
         public ulong ReadCount()
         {
-            return count;
+            return _count;
         }
     }
 }

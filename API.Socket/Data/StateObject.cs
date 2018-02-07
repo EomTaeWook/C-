@@ -1,4 +1,5 @@
-﻿using API.Socket.Data.Packet;
+﻿
+using API.Util;
 using System;
 using System.Diagnostics;
 using System.Net.Sockets;
@@ -8,66 +9,66 @@ namespace API.Socket.Data
     {
         public const int BufferSize = 2048;
 
-        protected ulong handle;
+        protected ulong _handle;
 
-        private System.Net.Sockets.Socket workSocket = null;
-        private BufferQueue<byte> recieveQueue = null;
-        private BufferQueue<Packet.Packet> packetQueue = null;
-        private BufferQueue<Packet.Packet> sendQueue = null;
+        private System.Net.Sockets.Socket _workSocket = null;
+        private BufferQueue<byte> _recieveQueue = null;
+        private BufferQueue<Packet.Packet> _packetQueue = null;
+        private BufferQueue<Packet.Packet> _sendQueue = null;
 
-        public System.Net.Sockets.Socket WorkSocket { get => workSocket; set => workSocket = value; }
-        public BufferQueue<byte> Queue { get => recieveQueue; }
-        public BufferQueue<Packet.Packet> PacketQueue { get => packetQueue; }
-        public ulong Handle { get => handle; set => handle = value; }
+        public System.Net.Sockets.Socket WorkSocket { get => _workSocket; set => _workSocket = value; }
+        public BufferQueue<byte> Queue { get => _recieveQueue; }
+        public BufferQueue<Packet.Packet> PacketQueue { get => _packetQueue; }
+        public ulong Handle { get => _handle; set => _handle = value; }
 
-        private SocketAsyncEventArgs receiveAsync = null;
+        private SocketAsyncEventArgs _receiveAsync = null;
         public SocketAsyncEventArgs ReceiveAsync
         {
-            get { return receiveAsync; }
-            set => receiveAsync = value;
+            get { return _receiveAsync; }
+            set => _receiveAsync = value;
         }
         public StateObject()
         {
-            recieveQueue = new BufferQueue<byte>();
-            packetQueue = new BufferQueue<Packet.Packet>();
-            sendQueue = new BufferQueue<Packet.Packet>();
+            _recieveQueue = new BufferQueue<byte>();
+            _packetQueue = new BufferQueue<Packet.Packet>();
+            _sendQueue = new BufferQueue<Packet.Packet>();
         }
         public void Init()
         {
-            lock(this)
+            lock (this)
             {
-                if(!recieveQueue.IsDisposable)
-                    recieveQueue.Clear();
-                if (!packetQueue.IsDisposable)
-                    packetQueue.Clear();
-                if (!sendQueue.IsDisposable)
-                    sendQueue.Clear();
+                if (!_recieveQueue.IsDisposable)
+                    _recieveQueue.Clear();
+                if (!_packetQueue.IsDisposable)
+                    _packetQueue.Clear();
+                if (!_sendQueue.IsDisposable)
+                    _sendQueue.Clear();
 
-                handle = 0;
-                receiveAsync = null;
-                if(workSocket != null)
+                _handle = 0;
+                _receiveAsync = null;
+                if (_workSocket != null)
                 {
-                    lock(workSocket)
+                    lock (_workSocket)
                     {
                         try
                         {
-                            workSocket.Shutdown(SocketShutdown.Both);
+                            _workSocket.Shutdown(SocketShutdown.Both);
                         }
                         catch (System.Exception ex)
                         {
                             Debug.WriteLine(ex.Message);
                         }
-                        workSocket.Close();
-                        workSocket = null;
+                        _workSocket.Close();
+                        _workSocket = null;
                     }
                 }
             }
         }
         public bool IsConnect()
         {
-            if(workSocket != null)
+            if (_workSocket != null)
             {
-                return workSocket.Connected;
+                return _workSocket.Connected;
             }
             else
             {
@@ -78,15 +79,15 @@ namespace API.Socket.Data
         {
             try
             {
-                if (sendQueue.Count() <= 0)
+                if (_sendQueue.Count() <= 0)
                 {
-                    sendQueue.Append(packet);
+                    _sendQueue.Append(packet);
                     BeginSend();
                     return;
                 }
-                sendQueue.Append(packet);
+                _sendQueue.Append(packet);
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 throw new Exception.Exception(ex.Message);
             }
@@ -99,31 +100,31 @@ namespace API.Socket.Data
                 {
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
-                Packet.Packet packet = sendQueue.Peek();
-                WorkSocket.BeginSend(packet.GetBytes(), 0, packet.GetBytes().Length, 0, new AsyncCallback(SendCallback), this);                 
+                Packet.Packet packet = _sendQueue.Peek();
+                WorkSocket.BeginSend(packet.GetBytes(), 0, packet.GetBytes().Length, 0, new AsyncCallback(SendCallback), this);
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 throw new Exception.Exception("State Send Exception :" + ex.Message);
-            }            
+            }
         }
         private void SendCallback(IAsyncResult ar)
         {
             StateObject handler = (StateObject)ar.AsyncState;
             try
             {
-                if(handler.WorkSocket != null)
+                if (handler.WorkSocket != null)
                 {
                     int bytesSent = handler.WorkSocket.EndSend(ar);
                     Debug.WriteLine(string.Format("Sent {0} bytes to client.", bytesSent));
 
-                    if (sendQueue.Count() > 0)
+                    if (_sendQueue.Count() > 0)
                     {
-                        var packet = sendQueue.Read();
+                        var packet = _sendQueue.Read();
                         packet.Dispose();
                         packet = null;
                     }
-                    if (sendQueue.Count() > 0)
+                    if (_sendQueue.Count() > 0)
                     {
                         BeginSend();
                     }
@@ -150,9 +151,9 @@ namespace API.Socket.Data
         {
             try
             {
-                lock(this)
+                lock (this)
                 {
-                    if(ReceiveAsync != null)
+                    if (ReceiveAsync != null)
                     {
                         ReceiveAsync.SocketError = SocketError.Shutdown;
                         ReceiveAsync.SetBuffer(null, 0, 0);
@@ -163,12 +164,12 @@ namespace API.Socket.Data
                         WorkSocket.Close();
                         WorkSocket = null;
                     }
-                    recieveQueue.Dispose();
-                    packetQueue.Dispose();
-                    sendQueue.Dispose();
+                    _recieveQueue.Dispose();
+                    _packetQueue.Dispose();
+                    _sendQueue.Dispose();
                 }
             }
-            catch(Exception.Exception ex)
+            catch (Exception.Exception ex)
             {
                 throw new Exception.Exception("State Dispose :" + ex.Message);
             }
