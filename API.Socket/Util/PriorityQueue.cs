@@ -44,11 +44,11 @@ namespace API.Util
         {
             _list.CopyTo(array, arrayIndex);
         }
-        public T Dequeue()
+        public T Read()
         {
             if (_list.Count == 0)
             {
-                throw new InvalidOperationException();
+                throw new IndexOutOfRangeException();
             }
             T item = _list[0];
             _list[0] = _list[_list.Count - 1];
@@ -110,12 +110,11 @@ namespace API.Util
                 }
                 else
                     break;
-                
-            }
 
+            }
             return item;
         }
-        public void Enqueue(T item)
+        public void Append(T item)
         {
             _list.Add(item);
             int index = _list.Count - 1;
@@ -143,7 +142,7 @@ namespace API.Util
         {
             if (_list.Count == 0)
             {
-                throw new InvalidOperationException();
+                throw new IndexOutOfRangeException();
             }
             return _list[0];
         }
