@@ -164,8 +164,13 @@ namespace API.Socket.Data
                         WorkSocket.Close();
                         WorkSocket = null;
                     }
+                    _recieveQueue.Clear();
                     _recieveQueue.Dispose();
+
+                    _packetQueue.Clear();
                     _packetQueue.Dispose();
+
+                    _sendQueue.Clear();
                     _sendQueue.Dispose();
                 }
             }
