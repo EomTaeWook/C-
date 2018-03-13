@@ -35,8 +35,7 @@ namespace API.Socket
             _isRunning = false;
             _allDone = new ManualResetEvent(false);
             _packetPool = new MemoryPool<Packet>(poolCount * 2);
-            _socketArgPool = new MemoryPool<SocketAsyncEventArgs>(poolCount, false);
-            _socketArgPool.Init(0, CreateSockEventArg);
+            _socketArgPool = new MemoryPool<SocketAsyncEventArgs>(poolCount, CreateSockEventArg);
         }
         protected void SetPacketMemoryPool(int count)
         {

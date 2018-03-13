@@ -10,7 +10,7 @@ namespace API.Util
         protected Queue<T> _pool;
         protected readonly object _append, _read;
         private Func<T> _createT;
-        public MemoryPool(int count = 100, bool autoCreate = true, Func<T> func = null)
+        public MemoryPool(int count = 100, Func<T> func = null, bool autoCreate = true)
         {
             _append = new object();
             _read = new object();
