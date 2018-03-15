@@ -14,6 +14,7 @@ namespace API.Util
             _append = new object();
             _read = new object();
             _queue = new Queue<T>();
+            IsDispose = false;
         }
         public void Append(T data)
         {
@@ -138,18 +139,19 @@ namespace API.Util
         }
         public void Dispose()
         {
+            if (IsDispose) return;
             try
             {
                 Monitor.Enter(this);
                 _queue.Clear();
                 _queue = null;
-                IsDisposable = true;
+                IsDispose = true;
             }
             finally
             {
                 Monitor.Exit(this);
             }
         }
-        public bool IsDisposable { get; private set; }
+        public bool IsDispose { get; private set; }
     }
 }

@@ -32,36 +32,51 @@ namespace API.Socket.Data
             _recieveQueue = new BufferQueue<byte>();
             _packetQueue = new BufferQueue<Packet.Packet>();
             _sendQueue = new BufferQueue<Packet.Packet>();
+
+            IsDispose = false;
         }
         public void Init()
         {
-            lock (this)
+            try
             {
-                if (!_recieveQueue.IsDisposable)
-                    _recieveQueue.Clear();
-                if (!_packetQueue.IsDisposable)
-                    _packetQueue.Clear();
-                if (!_sendQueue.IsDisposable)
-                    _sendQueue.Clear();
-
-                _handle = 0;
-                _receiveAsync = null;
-                if (_workSocket != null)
+                lock (this)
                 {
-                    lock (_workSocket)
+                    _handle = 0;
+                    _receiveAsync = null;
+                    if (_workSocket != null)
                     {
-                        try
+                        lock (_workSocket)
                         {
-                            _workSocket.Shutdown(SocketShutdown.Both);
+                            try
+                            {
+                                _workSocket.Shutdown(SocketShutdown.Both);
+                            }
+                            catch (System.Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                            }
+                            _workSocket.Close();
+                            _workSocket = null;
                         }
-                        catch (System.Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
-                        _workSocket.Close();
-                        _workSocket = null;
                     }
+
+                    if (!_recieveQueue.IsDispose)
+                        _recieveQueue.Clear();
+                    else
+                        throw new ObjectDisposedException("RecieveQueue is Disposed");
+                    if (!_packetQueue.IsDispose)
+                        _packetQueue.Clear();
+                    else
+                        throw new ObjectDisposedException("PacketQueue is Disposed");
+                    if (!_sendQueue.IsDispose)
+                        _sendQueue.Clear();
+                    else
+                        throw new ObjectDisposedException("SendQueue is Disposed");
                 }
+            }
+            catch (System.Exception ex)
+            {
+                throw ex;
             }
         }
         public bool IsConnect()
@@ -149,6 +164,7 @@ namespace API.Socket.Data
         }
         public void Dispose()
         {
+            if (IsDispose) return;
             try
             {
                 lock (this)
@@ -172,6 +188,8 @@ namespace API.Socket.Data
 
                     _sendQueue.Clear();
                     _sendQueue.Dispose();
+
+                    IsDispose = true;
                 }
             }
             catch (Exception.Exception ex)
@@ -179,5 +197,6 @@ namespace API.Socket.Data
                 throw new Exception.Exception("State Dispose :" + ex.Message);
             }
         }
+        public bool IsDispose { get; private set; }
     }
 }
