@@ -3,18 +3,13 @@ using System.Text;
 
 namespace API.Socket.Callback.Client
 {
-    public abstract class ICallback<T> where T : class
+    public abstract class ICallbackBase
     {
         protected ClientBase _clientSocket;
         protected abstract void InitCallback();
-
-        public ICallback(ClientBase clientSocket)
+        public ICallbackBase(ClientBase clientSocket)
         {
-            this._clientSocket = clientSocket;
-        }
-        protected void BindCallback(int protocol, T funtion)
-        {
-            _clientSocket.BindCallback(protocol, funtion);
+            _clientSocket = clientSocket;
         }
         public void Send(UInt16 protocol, string json)
         {
@@ -26,6 +21,30 @@ namespace API.Socket.Callback.Client
         {
             if (data == null) return;
             _clientSocket.Send(protocol, data);
+        }
+    }
+
+    public abstract class ICallback<T> : ICallbackBase
+    {
+        public ICallback(ClientBase clientSocket) : base(clientSocket)
+        {
+        }
+
+        protected void BindCallback(int protocol, Action<T> funtion)
+        {
+            _clientSocket.BindCallback(protocol, funtion);
+        }
+        
+    }
+    public abstract class ICallback<T1, T2> : ICallbackBase
+    {
+        public ICallback(ClientBase clientSocket) : base(clientSocket)
+        {
+        }
+
+        protected void BindCallback(int protocol, Action<T1,T2> funtion)
+        {
+            _clientSocket.BindCallback(protocol, funtion);
         }
     }
 }

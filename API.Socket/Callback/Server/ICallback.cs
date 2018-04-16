@@ -1,20 +1,16 @@
 ﻿using API.Socket.Data;
+using API.Socket.Data.Packet;
 using System;
 
 namespace API.Socket.Callback.Server
 {
-    public abstract class ICallback<T> where T : class
+    public abstract class ICallbackBase
     {
         protected ServerBase _server;
         protected abstract void InitCallback();
-
-        public ICallback(ServerBase server)
+        public ICallbackBase(ServerBase server)
         {
             _server = server;
-        }
-        protected void BindCallback(int protocol, T funtion)
-        {
-            _server.BindCallback(protocol, funtion);
         }
         public void Send(StateObject handler, UInt16 protocol, string json)
         {
@@ -30,6 +26,39 @@ namespace API.Socket.Callback.Server
         public virtual void BroadCast(Data.Packet.Packet packet, StateObject state)
         {
             _server.BroadCast(packet, state);
+        }
+    }
+
+    public abstract class ICallback : ICallbackBase
+    {
+        public ICallback(ServerBase server) : base(server)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, StateObject> funtion)
+        {
+            _server.BindCallback(protocol, funtion);
+        }
+    }
+
+    public abstract class ICallback<T> : ICallbackBase
+    {
+        public ICallback(ServerBase server) : base(server)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, StateObject, T> funtion)
+        {
+            _server.BindCallback(protocol, funtion);
+        }
+    }
+
+    public abstract class ICallback<T1, T2> : ICallbackBase
+    {
+        public ICallback(ServerBase server) : base(server)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, StateObject, T1, T2> funtion)
+        {
+            _server.BindCallback(protocol, funtion);
         }
     }
 }
