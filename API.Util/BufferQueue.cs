@@ -16,32 +16,34 @@ namespace API.Util
             _queue = new Queue<T>();
             IsDispose = false;
         }
-        public void Append(T data)
+        public BufferQueue<T> Append(T item)
         {
             try
             {
                 Monitor.Enter(_append);
-                _queue.Enqueue(data);
+                _queue.Enqueue(item);
             }
             finally
             {
                 Monitor.Exit(_append);
             }
+            return this;
         }
-        public void Append(T[] data)
+        public BufferQueue<T> Append(T[] items)
         {
             try
             {
                 Monitor.Enter(_append);
-                for (int i = 0; i < data.Length; i++)
+                for (int i = 0; i < items.Length; i++)
                 {
-                    _queue.Enqueue(data[i]);
+                    _queue.Enqueue(items[i]);
                 }
             }
             finally
             {
                 Monitor.Exit(_append);
             }
+            return this;
         }
         public T Peek()
         {
@@ -83,7 +85,7 @@ namespace API.Util
         }
         public T Read()
         {
-            T data;
+            T item;
             try
             {
                 Monitor.Enter(_read);
@@ -91,17 +93,17 @@ namespace API.Util
                 {
                     throw new IndexOutOfRangeException();
                 }
-                data = _queue.Dequeue();
+                item = _queue.Dequeue();
             }
             finally
             {
                 Monitor.Exit(_read);
             }
-            return data;
+            return item;
         }
         public T[] Read(uint size)
         {
-            T[] data = null;
+            T[] items = null;
             try
             {
                 Monitor.Enter(_read);
@@ -109,17 +111,17 @@ namespace API.Util
                 {
                     throw new IndexOutOfRangeException();
                 }
-                data = new T[size];
+                items = new T[size];
                 for (int i = 0; i < size; i++)
                 {
-                    data[i] = _queue.Dequeue();
+                    items[i] = _queue.Dequeue();
                 }
             }
             finally
             {
                 Monitor.Exit(_read);
             }
-            return data;
+            return items;
         }
         public int Count()
         {
