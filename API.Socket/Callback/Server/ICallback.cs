@@ -23,7 +23,7 @@ namespace API.Socket.Callback.Server
             if (data == null) return;
             _server.Send(handler, protocol, data);
         }
-        public virtual void BroadCast(Data.Packet.Packet packet, StateObject state)
+        public virtual void BroadCast(Packet packet, StateObject state)
         {
             _server.BroadCast(packet, state);
         }
