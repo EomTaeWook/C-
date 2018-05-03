@@ -1,4 +1,5 @@
-﻿using System;
+﻿using API.Socket.Data.Packet;
+using System;
 using System.Text;
 
 namespace API.Socket.Callback.Client
@@ -23,26 +24,42 @@ namespace API.Socket.Callback.Client
             _clientSocket.Send(protocol, data);
         }
     }
-
     public abstract class ICallback<T> : ICallbackBase
     {
         public ICallback(ClientBase clientSocket) : base(clientSocket)
         {
         }
-
-        protected void BindCallback(int protocol, Action<T> funtion)
+        protected void BindCallback(int protocol, Action<Packet, T> funtion)
         {
             _clientSocket.BindCallback(protocol, funtion);
         }
-        
     }
     public abstract class ICallback<T1, T2> : ICallbackBase
     {
         public ICallback(ClientBase clientSocket) : base(clientSocket)
         {
         }
-
-        protected void BindCallback(int protocol, Action<T1,T2> funtion)
+        protected void BindCallback(int protocol, Action<Packet, T1, T2> funtion)
+        {
+            _clientSocket.BindCallback(protocol, funtion);
+        }
+    }
+    public abstract class ICallback<T1, T2, T3> : ICallbackBase
+    {
+        public ICallback(ClientBase clientSocket) : base(clientSocket)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, T1, T2, T3> funtion)
+        {
+            _clientSocket.BindCallback(protocol, funtion);
+        }
+    }
+    public abstract class ICallback<T1, T2, T3, T4> : ICallbackBase
+    {
+        public ICallback(ClientBase clientSocket) : base(clientSocket)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, T1, T2, T3, T4> funtion)
         {
             _clientSocket.BindCallback(protocol, funtion);
         }

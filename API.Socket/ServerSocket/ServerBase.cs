@@ -34,30 +34,55 @@ namespace API.Socket
             _functionMap = new ServerFunctionMap();
             _acceptCount = new MutexCount();
         }
-        public void BindCallback(int protocol, Action<Packet, StateObject> func)
-        {
-            BindCallback<Action<Data.Packet.Packet, StateObject>>(protocol, func);
-        }
-        public void BindCallback<T>(int protocol, T func)
+        public void BindCallback<T1, T2, T3, T4>(int protocol, Action<Packet, StateObject, T1, T2, T3, T4> func)
         {
             try
             {
-                if (func.GetType().BaseType.Equals(Type.GetType("System.MulticastDelegate")))
-                {
-                    if (func.GetType().GenericTypeArguments[0].Equals(Type.GetType("API.Socket.Data.Packet.Packet"))
-                        && func.GetType().GenericTypeArguments[1].Equals(Type.GetType("API.Socket.Data.StateObject")))
-                    {
-                        _functionMap.BindCallback(protocol, func);
-                    }
-                    else
-                    {
-                        throw new FormatException("Invalid delegate parameter order");
-                    }
-                }
-                else
-                {
-                    throw new FormatException("Type is not a function delegate");
-                }
+                _functionMap.BindCallback(protocol, func);
+            }
+            catch (System.Exception ex)
+            {
+                throw new System.Exception(ex.Message, ex);
+            }
+        }
+        public void BindCallback<T1, T2, T3>(int protocol, Action<Packet, StateObject, T1, T2, T3> func)
+        {
+            try
+            {
+                _functionMap.BindCallback(protocol, func);
+            }
+            catch (System.Exception ex)
+            {
+                throw new System.Exception(ex.Message, ex);
+            }
+        }
+        public void BindCallback<T1, T2>(int protocol, Action<Packet, StateObject, T1, T2> func)
+        {
+            try
+            {
+                _functionMap.BindCallback(protocol, func);
+            }
+            catch (System.Exception ex)
+            {
+                throw new System.Exception(ex.Message, ex);
+            }
+        }
+        public void BindCallback<T>(int protocol, Action<Packet, StateObject, T> func)
+        {
+            try
+            {
+                _functionMap.BindCallback(protocol, func);
+            }
+            catch (System.Exception ex)
+            {
+                throw new System.Exception(ex.Message, ex);
+            }
+        }
+        public void BindCallback(int protocol, Action<Packet, StateObject> func)
+        {
+            try
+            {
+                _functionMap.BindCallback(protocol, func);
             }
             catch (System.Exception ex)
             {

@@ -121,7 +121,7 @@ namespace API.Util
             int parent = 0;
             while (true)
             {
-                if (index == 0) break;
+                if (index <= 0) break;
                 parent = (index - 1) / 2;
                 var order = _list[index].CompareTo(_list[parent]);
                 if (_order == Order.Ascending && order > 0)

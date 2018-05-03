@@ -61,4 +61,26 @@ namespace API.Socket.Callback.Server
             _server.BindCallback(protocol, funtion);
         }
     }
+
+    public abstract class ICallback<T1, T2, T3> : ICallbackBase
+    {
+        public ICallback(ServerBase server) : base(server)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, StateObject, T1, T2, T3> funtion)
+        {
+            _server.BindCallback(protocol, funtion);
+        }
+    }
+
+    public abstract class ICallback<T1, T2, T3, T4> : ICallbackBase
+    {
+        public ICallback(ServerBase server) : base(server)
+        {
+        }
+        protected void BindCallback(int protocol, Action<Packet, StateObject, T1, T2, T3, T4> funtion)
+        {
+            _server.BindCallback(protocol, funtion);
+        }
+    }
 }
