@@ -21,10 +21,10 @@ namespace API.Socket
             arg = null;
             return true;
         }
-        public virtual void BroadCast(Data.Packet.Packet packet, StateObject state) { }
-        protected virtual void ForwardFunc(Data.Packet.Packet packet, StateObject stateObject) { }
-        protected virtual void CallbackComplete(Data.Packet.Packet packet, StateObject stateObject) { }
-        protected virtual Data.Enum.VertifyResult VerifyPacket(Data.Packet.Packet packet, StateObject handler)
+        public virtual void BroadCast(Packet packet, StateObject state) { }
+        protected virtual void ForwardFunc(Packet packet, StateObject stateObject) { }
+        protected virtual void CallbackComplete(Packet packet, StateObject stateObject) { }
+        protected virtual Data.Enum.VertifyResult VerifyPacket(Packet packet, StateObject handler)
         {
             return Data.Enum.VertifyResult.Vertify_Accept;
         }
