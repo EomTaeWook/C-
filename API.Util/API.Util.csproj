@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crypto\DesCrypto.cs" />
+    <Compile Include="DesignPattern\Singleton.cs" />
     <Compile Include="SyncQueue.cs" />
     <Compile Include="DoubleBuffer.cs" />
     <Compile Include="MemoryPool.cs" />
