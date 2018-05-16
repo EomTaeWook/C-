@@ -5,18 +5,18 @@ using System.Threading;
 
 namespace API.Util
 {
-    public class BufferQueue<T> : IDisposable
+    public class SyncQueue<T> : IDisposable
     {
         private Queue<T> _queue;
         private readonly object _append, _read;
-        public BufferQueue()
+        public SyncQueue()
         {
             _append = new object();
             _read = new object();
             _queue = new Queue<T>();
             IsDispose = false;
         }
-        public BufferQueue<T> Append(T item)
+        public SyncQueue<T> Append(T item)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace API.Util
             }
             return this;
         }
-        public BufferQueue<T> Append(T[] items)
+        public SyncQueue<T> Append(T[] items)
         {
             try
             {

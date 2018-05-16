@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BufferQueue.cs" />
+    <Compile Include="SyncQueue.cs" />
     <Compile Include="DoubleBuffer.cs" />
     <Compile Include="MemoryPool.cs" />
     <Compile Include="ObjectConverter.cs" />

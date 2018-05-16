@@ -12,13 +12,13 @@ namespace API.Socket.Data
         protected ulong _handle;
 
         private System.Net.Sockets.Socket _workSocket = null;
-        private BufferQueue<byte> _recieveQueue = null;
-        private BufferQueue<Packet.Packet> _packetQueue = null;
-        private BufferQueue<Packet.Packet> _sendQueue = null;
+        private SyncQueue<byte> _receiveBuffer = null;
+        private SyncQueue<Packet.Packet> _packetBuffer = null;
+        private SyncQueue<Packet.Packet> _sendQueue = null;
 
         public System.Net.Sockets.Socket WorkSocket { get => _workSocket; set => _workSocket = value; }
-        public BufferQueue<byte> Queue { get => _recieveQueue; }
-        public BufferQueue<Packet.Packet> PacketQueue { get => _packetQueue; }
+        public SyncQueue<byte> ReceiveBuffer { get => _receiveBuffer; }
+        public SyncQueue<Packet.Packet> PacketBuffer { get => _packetBuffer; }
         public ulong Handle { get => _handle; set => _handle = value; }
 
         private SocketAsyncEventArgs _receiveAsync = null;
@@ -29,9 +29,9 @@ namespace API.Socket.Data
         }
         public StateObject()
         {
-            _recieveQueue = new BufferQueue<byte>();
-            _packetQueue = new BufferQueue<Packet.Packet>();
-            _sendQueue = new BufferQueue<Packet.Packet>();
+            _receiveBuffer = new SyncQueue<byte>();
+            _packetBuffer = new SyncQueue<Packet.Packet>();
+            _sendQueue = new SyncQueue<Packet.Packet>();
 
             IsDispose = false;
         }
@@ -60,12 +60,12 @@ namespace API.Socket.Data
                         }
                     }
 
-                    if (!_recieveQueue.IsDispose)
-                        _recieveQueue.Clear();
+                    if (!_receiveBuffer.IsDispose)
+                        _receiveBuffer.Clear();
                     else
                         throw new ObjectDisposedException("RecieveQueue is Disposed");
-                    if (!_packetQueue.IsDispose)
-                        _packetQueue.Clear();
+                    if (!_packetBuffer.IsDispose)
+                        _packetBuffer.Clear();
                     else
                         throw new ObjectDisposedException("PacketQueue is Disposed");
                     if (!_sendQueue.IsDispose)
@@ -180,11 +180,11 @@ namespace API.Socket.Data
                         WorkSocket.Close();
                         WorkSocket = null;
                     }
-                    _recieveQueue.Clear();
-                    _recieveQueue.Dispose();
+                    _receiveBuffer.Clear();
+                    _receiveBuffer.Dispose();
 
-                    _packetQueue.Clear();
-                    _packetQueue.Dispose();
+                    _packetBuffer.Clear();
+                    _packetBuffer.Dispose();
 
                     _sendQueue.Clear();
                     _sendQueue.Dispose();

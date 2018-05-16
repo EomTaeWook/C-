@@ -4,14 +4,14 @@ namespace API.Util
 {
     public class DoubleBuffer<T>
     {
-        BufferQueue<T>[] _buffer;
+        SyncQueue<T>[] _buffer;
         private short _idx;
         private readonly object _mutex;
 
         public DoubleBuffer()
         {
             _mutex = new object();
-            _buffer = new BufferQueue<T>[2] { new BufferQueue<T>(), new BufferQueue<T>() };
+            _buffer = new SyncQueue<T>[2] { new SyncQueue<T>(), new SyncQueue<T>() };
         }
 
         public void Swap()
@@ -26,9 +26,7 @@ namespace API.Util
                 Monitor.Exit(_mutex);
             }
         }
-        public BufferQueue<T> ReadBuffer { get => _buffer[_idx ^ 1]; }
-        public BufferQueue<T> WriteBuffer { get => _buffer[_idx]; }
-
-
+        public SyncQueue<T> ReadBuffer { get => _buffer[_idx ^ 1]; }
+        public SyncQueue<T> WriteBuffer { get => _buffer[_idx]; }
     }
 }

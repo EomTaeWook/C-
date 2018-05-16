@@ -75,25 +75,25 @@ namespace API.Socket
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
                     Debug.WriteLine("handler {0}: Read {1}", state.Handle, e.BytesTransferred);
-                    state.Queue.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
-                    if (state.Queue.Count() >= Packet.HeaderSize)
+                    state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
+                    if (state.ReceiveBuffer.Count() >= Packet.HeaderSize)
                     {
-                        var b = state.Queue.Peek(0, Packet.HeaderSize);
+                        var b = state.ReceiveBuffer.Peek(0, Packet.HeaderSize);
                         SHeader header = ObjectConverter.BytesToObject<SHeader>(b);
-                        if (state.Queue.Count() >= header.DataSize)
+                        if (state.ReceiveBuffer.Count() >= header.DataSize)
                         {
-                            b = state.Queue.Read(Convert.ToUInt32(header.DataSize));
+                            b = state.ReceiveBuffer.Read(Convert.ToUInt32(header.DataSize));
                             Packet packet = _packetPool.Pop();
                             packet.SetHeader(header);
                             packet.Data = b.Skip(Packet.HeaderSize).ToArray();
-                            if (state.PacketQueue.Count() <= 0)
+                            if (state.PacketBuffer.Count() <= 0)
                             {
-                                state.PacketQueue.Append(packet);
+                                state.PacketBuffer.Append(packet);
                                 ThreadPool.QueueUserWorkItem(new WaitCallback(Work), state);
                             }
                             else
                             {
-                                state.PacketQueue.Append(packet);
+                                state.PacketBuffer.Append(packet);
                             }
                         }
                     }
@@ -286,9 +286,9 @@ namespace API.Socket
             StateObject state = (StateObject)obj;
             try
             {
-                while (state.PacketQueue.Count() > 0)
+                while (state.PacketBuffer.Count() > 0)
                 {
-                    Packet packet = state.PacketQueue.Read();
+                    Packet packet = state.PacketBuffer.Read();
                     object[] arg = null;
                     if (!PacketConversionComplete(packet, state, out arg))
                     {
