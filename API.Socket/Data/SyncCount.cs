@@ -2,11 +2,11 @@
 
 namespace API.Socket.Data
 {
-    public class MutexCount
+    public class SyncCount
     {
         private ulong _count = 0;
         private readonly object _mutex;
-        public MutexCount()
+        public SyncCount()
         {
             _mutex = new object();
         }

@@ -14,7 +14,7 @@ namespace API.Socket.Data
         private System.Net.Sockets.Socket _workSocket = null;
         private SyncQueue<byte> _receiveBuffer = null;
         private SyncQueue<Packet.Packet> _packetBuffer = null;
-        private SyncQueue<Packet.Packet> _sendQueue = null;
+        private SyncQueue<Packet.Packet> _sendBuffer = null;
 
         public System.Net.Sockets.Socket WorkSocket { get => _workSocket; set => _workSocket = value; }
         public SyncQueue<byte> ReceiveBuffer { get => _receiveBuffer; }
@@ -31,7 +31,7 @@ namespace API.Socket.Data
         {
             _receiveBuffer = new SyncQueue<byte>();
             _packetBuffer = new SyncQueue<Packet.Packet>();
-            _sendQueue = new SyncQueue<Packet.Packet>();
+            _sendBuffer = new SyncQueue<Packet.Packet>();
 
             IsDispose = false;
         }
@@ -68,8 +68,8 @@ namespace API.Socket.Data
                         _packetBuffer.Clear();
                     else
                         throw new ObjectDisposedException("PacketQueue is Disposed");
-                    if (!_sendQueue.IsDispose)
-                        _sendQueue.Clear();
+                    if (!_sendBuffer.IsDispose)
+                        _sendBuffer.Clear();
                     else
                         throw new ObjectDisposedException("SendQueue is Disposed");
                 }
@@ -94,13 +94,13 @@ namespace API.Socket.Data
         {
             try
             {
-                if (_sendQueue.Count() <= 0)
+                if (_sendBuffer.Count() <= 0)
                 {
-                    _sendQueue.Append(packet);
+                    _sendBuffer.Append(packet);
                     BeginSend();
                     return;
                 }
-                _sendQueue.Append(packet);
+                _sendBuffer.Append(packet);
             }
             catch (System.Exception ex)
             {
@@ -115,7 +115,7 @@ namespace API.Socket.Data
                 {
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
-                Packet.Packet packet = _sendQueue.Peek();
+                Packet.Packet packet = _sendBuffer.Peek();
                 WorkSocket.BeginSend(packet.GetBytes(), 0, packet.GetBytes().Length, 0, new AsyncCallback(SendCallback), this);
             }
             catch (System.Exception ex)
@@ -133,13 +133,13 @@ namespace API.Socket.Data
                     int bytesSent = handler.WorkSocket.EndSend(ar);
                     Debug.WriteLine(string.Format("Sent {0} bytes to client.", bytesSent));
 
-                    if (_sendQueue.Count() > 0)
+                    if (_sendBuffer.Count() > 0)
                     {
-                        var packet = _sendQueue.Read();
+                        var packet = _sendBuffer.Read();
                         packet.Dispose();
                         packet = null;
                     }
-                    if (_sendQueue.Count() > 0)
+                    if (_sendBuffer.Count() > 0)
                     {
                         BeginSend();
                     }
@@ -186,8 +186,8 @@ namespace API.Socket.Data
                     _packetBuffer.Clear();
                     _packetBuffer.Dispose();
 
-                    _sendQueue.Clear();
-                    _sendQueue.Dispose();
+                    _sendBuffer.Clear();
+                    _sendBuffer.Dispose();
 
                     IsDispose = true;
                 }

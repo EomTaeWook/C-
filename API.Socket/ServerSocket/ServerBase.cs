@@ -8,7 +8,7 @@ namespace API.Socket
     public abstract class ServerBase
     {
         private ServerFunctionMap _functionMap;
-        protected MutexCount _acceptCount;
+        protected SyncCount _acceptCount;
         #region abstract | virtual
         public abstract void Send(StateObject handler, Packet packet);
         public virtual void Close() { _functionMap.Clear(); _functionMap = null; }
@@ -32,7 +32,7 @@ namespace API.Socket
         public ServerBase()
         {
             _functionMap = new ServerFunctionMap();
-            _acceptCount = new MutexCount();
+            _acceptCount = new SyncCount();
         }
         public void BindCallback<T1, T2, T3, T4>(int protocol, Action<Packet, StateObject, T1, T2, T3, T4> func)
         {
@@ -106,10 +106,10 @@ namespace API.Socket
             }
             return false;
         }
-        public void Send(StateObject handler, UInt16 protocol, string json)
+        public void Send(StateObject handler, UInt16 protocol, string data)
         {
-            if (json == null) return;
-            byte[] b = System.Text.Encoding.Default.GetBytes(json);
+            if (data == null) return;
+            byte[] b = System.Text.Encoding.Default.GetBytes(data);
             Send(handler, protocol, b);
         }
         public void Send(StateObject handler, UInt16 protocol, byte[] data)

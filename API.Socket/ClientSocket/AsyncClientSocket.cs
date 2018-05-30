@@ -198,24 +198,24 @@ namespace API.Socket
                 StateObject state = e.UserToken as StateObject;
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
-                    state.Queue.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
+                    state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
                     Debug.WriteLine("handler {0}: Read {1}", state.Handle, e.BytesTransferred);
-                    if (state.Queue.Count() >= Packet.HeaderSize)
+                    if (state.ReceiveBuffer.Count() >= Packet.HeaderSize)
                     {
-                        var b = state.Queue.Peek(0, Packet.HeaderSize);
+                        var b = state.ReceiveBuffer.Peek(0, Packet.HeaderSize);
                         var packet = new Packet(b);
-                        if (state.Queue.Count() >= packet.GetHeader().DataSize)
+                        if (state.ReceiveBuffer.Count() >= packet.GetHeader().DataSize)
                         {
-                            b = state.Queue.Read(Convert.ToUInt32(packet.GetHeader().DataSize));
+                            b = state.ReceiveBuffer.Read(Convert.ToUInt32(packet.GetHeader().DataSize));
                             packet.Data = b.Skip(Packet.HeaderSize).ToArray();
-                            if (state.PacketQueue.Count() <= 0)
+                            if (state.PacketBuffer.Count() <= 0)
                             {
-                                state.PacketQueue.Append(packet);
+                                state.PacketBuffer.Append(packet);
                                 BeginWork(state);
                             }
                             else
                             {
-                                state.PacketQueue.Append(packet);
+                                state.PacketBuffer.Append(packet);
                             }
                         }
                         else
@@ -285,9 +285,9 @@ namespace API.Socket
         }
         private void BeginWork(StateObject state)
         {
-            while (state.PacketQueue.Count() > 0)
+            while (state.PacketBuffer.Count() > 0)
             {
-                Packet packet = state.PacketQueue.Read();
+                Packet packet = state.PacketBuffer.Read();
                 ThreadPool.QueueUserWorkItem(new WaitCallback(Work), packet);
             }
         }
