@@ -48,17 +48,16 @@
     <Compile Include="Callback\Client\ICallback.cs" />
     <Compile Include="Callback\Server\ICallback.cs" />
     <Compile Include="ClientSocket\ClientBase.cs" />
-    <Compile Include="ClientSocket\AsyncClientSocket.cs" />
+    <Compile Include="ClientSocket\ClientSocket.cs" />
     <Compile Include="Data\Enum\MsgType.cs" />
     <Compile Include="Data\Enum\VertifyResult.cs" />
     <Compile Include="Data\SyncCount.cs" />
-    <Compile Include="Data\FunctionMap.cs" />
     <Compile Include="Data\Packet.cs" />
     <Compile Include="Data\StateObject.cs" />
     <Compile Include="Exception\ErrorCode.cs" />
     <Compile Include="Exception\Exception.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServerSocket\AsyncServerSocket.cs" />
+    <Compile Include="ServerSocket\ServerSocket.cs" />
     <Compile Include="ServerSocket\ServerBase.cs" />
   </ItemGroup>
   <ItemGroup>

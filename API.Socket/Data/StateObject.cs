@@ -1,5 +1,4 @@
-﻿
-using API.Util;
+﻿using API.Util;
 using System;
 using System.Diagnostics;
 using System.Net.Sockets;
@@ -13,12 +12,12 @@ namespace API.Socket.Data
 
         private System.Net.Sockets.Socket _workSocket = null;
         private SyncQueue<byte> _receiveBuffer = null;
-        private SyncQueue<Packet.Packet> _packetBuffer = null;
-        private SyncQueue<Packet.Packet> _sendBuffer = null;
+        private SyncQueue<Packet> _packetBuffer = null;
+        private SyncQueue<Packet> _sendBuffer = null;
 
         public System.Net.Sockets.Socket WorkSocket { get => _workSocket; set => _workSocket = value; }
         public SyncQueue<byte> ReceiveBuffer { get => _receiveBuffer; }
-        public SyncQueue<Packet.Packet> PacketBuffer { get => _packetBuffer; }
+        public SyncQueue<Packet> ReceivePacketBuffer { get => _packetBuffer; }
         public ulong Handle { get => _handle; set => _handle = value; }
 
         private SocketAsyncEventArgs _receiveAsync = null;
@@ -30,8 +29,8 @@ namespace API.Socket.Data
         public StateObject()
         {
             _receiveBuffer = new SyncQueue<byte>();
-            _packetBuffer = new SyncQueue<Packet.Packet>();
-            _sendBuffer = new SyncQueue<Packet.Packet>();
+            _packetBuffer = new SyncQueue<Packet>();
+            _sendBuffer = new SyncQueue<Packet>();
 
             IsDispose = false;
         }
@@ -90,7 +89,7 @@ namespace API.Socket.Data
                 return false;
             }
         }
-        public void Send(Packet.Packet packet)
+        public void Send(Packet packet)
         {
             try
             {
@@ -115,7 +114,7 @@ namespace API.Socket.Data
                 {
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
-                Packet.Packet packet = _sendBuffer.Peek();
+                Packet packet = _sendBuffer.Peek();
                 WorkSocket.BeginSend(packet.GetBytes(), 0, packet.GetBytes().Length, 0, new AsyncCallback(SendCallback), this);
             }
             catch (System.Exception ex)
@@ -131,8 +130,6 @@ namespace API.Socket.Data
                 if (handler.WorkSocket != null)
                 {
                     int bytesSent = handler.WorkSocket.EndSend(ar);
-                    Debug.WriteLine(string.Format("Sent {0} bytes to client.", bytesSent));
-
                     if (_sendBuffer.Count() > 0)
                     {
                         var packet = _sendBuffer.Read();

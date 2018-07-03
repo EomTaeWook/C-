@@ -1,95 +1,199 @@
 ﻿using API.Socket.Data;
-using API.Socket.Data.Packet;
+using API.Socket.Exception;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace API.Socket
+namespace API.Socket.ClientSocket
 {
     public abstract class ClientBase
     {
-        private FunctionMap _functionMap;
-
+        private StateObject _stateObject;
+        private IPEndPoint _remoteEP;
+        private SocketAsyncEventArgs _receive_Args;
+        private string ip;
+        private int port;
         #region abstract
-        protected abstract void ConnectCompleteEvent(StateObject state);
-        public abstract void Send(int protocol, byte[] data);
         protected abstract void DisconnectedEvent();
-        protected abstract void ClosePeer();
-        public virtual void Close() { _functionMap.Clear(); _functionMap = null; }
-        public abstract void Connect(string ip, int port, int timeout = 5000);
-        protected virtual bool PacketConversionComplete(Packet packet, out object[] arg)
-        {
-            arg = null;
-            return true;
-        }
-        protected virtual Data.Enum.VertifyResult VerifyPacket(Packet packet) { return Data.Enum.VertifyResult.Vertify_Accept; }
-        protected virtual void ForwardFunc(Packet packet) { }
+        protected abstract void ConnectCompleteEvent(StateObject state);
+        protected abstract void Recieved(StateObject state);
         #endregion abstract
+        protected ClientBase()
+        {
+            Init();
+        }
+        public void Close()
+        {
+            ClosePeer();
+            _stateObject.Dispose();
+        }
+        public void Connect(string ip, int port, int timeout = 5000)
+        {
+            try
+            {
+                this.ip = ip;
+                this.port = port;
+                _remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
+                if (_stateObject.WorkSocket == null)
+                {
+                    System.Net.Sockets.Socket handler = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    IAsyncResult asyncResult = handler.BeginConnect(_remoteEP, null, null);
+                    if (asyncResult.AsyncWaitHandle.WaitOne(timeout, true))
+                    {
+                        handler.EndConnect(asyncResult);
+                        StateObject state = (StateObject)_receive_Args.UserToken;
+                        state.WorkSocket = handler;
+                        BeginReceive(state);
+                        ConnectCompleteEvent(state);
+                    }
+                    else
+                    {
+                        _stateObject.Init();
+                        throw new SocketException(10060);
+                    }
+                }
+            }
+            catch (ArgumentNullException arg)
+            {
+                throw new Exception.Exception(arg.Message);
+            }
+            catch (SocketException se)
+            {
+                throw new Exception.Exception(se.Message);
+            }
+            catch (System.Exception e)
+            {
+                throw new Exception.Exception(e.Message);
+            }
+        }
+        private void BeginReceive(StateObject state)
+        {
+            _stateObject.ReceiveAsync = _receive_Args;
+            if (state.WorkSocket != null)
+            {
+                bool pending = state.WorkSocket.ReceiveAsync(_receive_Args);
+                if (!pending)
+                {
+                    Process_Receive(_receive_Args);
+                }
+            }
+        }
 
-        public ClientBase()
+        private void Receive_Completed(object sender, SocketAsyncEventArgs e)
         {
-            _functionMap = new FunctionMap();
+            if (e.LastOperation == SocketAsyncOperation.Receive)
+                Process_Receive(e);
         }
-        protected bool FindKey(int key)
-        {
-            return _functionMap.FindKey(key);
-        }
-        public void BindCallback<T1, T2, T3, T4>(int protocol, Action<Packet, T1, T2, T3, T4> func)
+        private void Process_Receive(SocketAsyncEventArgs e)
         {
             try
             {
-                _functionMap.BindCallback(protocol, func);
+                StateObject state = e.UserToken as StateObject;
+                if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
+                {
+                    state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
+                    Recieved(state);
+                    bool pending = state.WorkSocket.ReceiveAsync(e);
+                    if (!pending)
+                    {
+                        Process_Receive(e);
+                    }
+                }
+                else
+                {
+#if DEBUG
+                    Debug.WriteLine(string.Format("error {0},  transferred {1}", e.SocketError, e.BytesTransferred));
+#endif
+                    ClosePeer();
+                }
             }
             catch (System.Exception ex)
             {
-                throw new System.Exception(ex.Message, ex);
+                ClosePeer();
+#if DEBUG
+                Debug.WriteLine("Process_Receive : " + ex.Message);
+#endif
             }
         }
-        public void BindCallback<T1, T2, T3>(int protocol, Action<Packet, T1, T2, T3> func)
+        private void Init()
         {
             try
             {
-                _functionMap.BindCallback(protocol, func);
+                _stateObject = new StateObject();
+                _receive_Args = new SocketAsyncEventArgs();
+                _receive_Args.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
+                _receive_Args.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
+                _receive_Args.UserToken = _stateObject;
             }
             catch (System.Exception ex)
             {
-                throw new System.Exception(ex.Message, ex);
+                throw new Exception.Exception(ex.Message);
             }
         }
-        public void BindCallback<T1, T2>(int protocol, Action<Packet, T1, T2> func)
+        protected void ClosePeer()
         {
             try
             {
-                _functionMap.BindCallback(protocol, func);
+                try
+                {
+                    Monitor.Enter(this);
+                    if (_receive_Args != null)
+                    {
+                        _receive_Args.SocketError = SocketError.Shutdown;
+                        _stateObject.Init();
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(this);
+                }
             }
-            catch (System.Exception ex)
+            catch (Exception.Exception ex)
             {
-                throw new System.Exception(ex.Message, ex);
+                Debug.WriteLine(ex.Message);
+            }
+            finally
+            {
+                DisconnectedEvent();
             }
         }
-        public void BindCallback<T>(int protocol, Action<Packet, T> func)
+        public bool IsConnect()
+        {
+            if (_stateObject == null) return false;
+            if (_stateObject.WorkSocket == null) return false;
+            return _stateObject.WorkSocket.Connected;
+        }
+        public void Send(Packet packet)
         {
             try
             {
-                _functionMap.BindCallback(protocol, func);
+                if (_stateObject.WorkSocket == null)
+                {
+                    throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
+                }
+                if (packet == null) return;
+                _stateObject.Send(packet);
+            }
+            catch (Exception.Exception ex)
+            {
+#if DEBUG
+                Debug.WriteLine("Send Exception : " + ex.GetErrorMessage());
+#endif
+                ClosePeer();
             }
             catch (System.Exception ex)
             {
-                throw new System.Exception(ex.Message, ex);
+#if DEBUG
+                ClosePeer();
+#endif
+                Debug.WriteLine("Send Exception : " + ex.Message);
             }
-        }
-        public void BindCallback(int protocol, Action<Packet> func)
-        {
-            try
-            {
-                _functionMap.BindCallback(protocol, func);
-            }
-            catch (System.Exception ex)
-            {
-                throw new System.Exception(ex.Message, ex);
-            }
-        }
-        protected void RunCallbackFunc(int protocol, Packet packet)
-        {
-            _functionMap.RunCallback(protocol, packet);
         }
     }
 }
