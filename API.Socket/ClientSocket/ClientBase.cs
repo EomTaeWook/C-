@@ -16,7 +16,7 @@ namespace API.Socket.ClientSocket
     {
         private StateObject _stateObject;
         private IPEndPoint _remoteEP;
-        private SocketAsyncEventArgs _receive_Args;
+        private SocketAsyncEventArgs _ioEvent;
         private string ip;
         private int port;
         private readonly object _closePeerObj;
@@ -80,22 +80,16 @@ namespace API.Socket.ClientSocket
         }
         private void BeginReceive(StateObject state)
         {
-            state.ReceiveAsync = _receive_Args;
             if (state.WorkSocket != null)
             {
-                bool pending = state.WorkSocket.ReceiveAsync(_receive_Args);
+                bool pending = state.WorkSocket.ReceiveAsync(_ioEvent);
                 if (!pending)
                 {
-                    Process_Receive(_receive_Args);
+                    ProcessReceive(_ioEvent);
                 }
             }
         }
-        private void Receive_Completed(object sender, SocketAsyncEventArgs e)
-        {
-            if (e.LastOperation == SocketAsyncOperation.Receive)
-                Process_Receive(e);
-        }
-        private void Process_Receive(SocketAsyncEventArgs e)
+        private void ProcessReceive(SocketAsyncEventArgs e)
         {
             try
             {
@@ -107,7 +101,7 @@ namespace API.Socket.ClientSocket
                     bool pending = state.WorkSocket.ReceiveAsync(e);
                     if (!pending)
                     {
-                        Process_Receive(e);
+                        ProcessReceive(e);
                     }
                 }
                 else
@@ -120,15 +114,21 @@ namespace API.Socket.ClientSocket
                 ClosePeer();
             }
         }
+        private void Receive_Completed(object sender, SocketAsyncEventArgs e)
+        {
+            if (e.LastOperation == SocketAsyncOperation.Receive)
+                ProcessReceive(e);
+        }
+        
         private void Init()
         {
             try
             {
                 _stateObject = new StateObject();
-                _receive_Args = new SocketAsyncEventArgs();
-                _receive_Args.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
-                _receive_Args.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
-                _receive_Args.UserToken = _stateObject;
+                _ioEvent = new SocketAsyncEventArgs();
+                _ioEvent.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
+                _ioEvent.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
+                _ioEvent.UserToken = _stateObject;
             }
             catch (System.Exception ex)
             {
@@ -143,9 +143,9 @@ namespace API.Socket.ClientSocket
                 {
                     try
                     {
-                        if (_receive_Args != null && _stateObject.WorkSocket != null)
+                        if (_ioEvent != null && _stateObject.WorkSocket != null)
                         {
-                            _receive_Args.SocketError = SocketError.Shutdown;
+                            _ioEvent.SocketError = SocketError.Shutdown;
                             _stateObject.Init();
                             DisconnectedEvent();
                         }

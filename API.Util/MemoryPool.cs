@@ -10,6 +10,7 @@ namespace API.Util
         protected Queue<T> _pool;
         protected readonly object _append, _read;
         private Func<T> _createT;
+        private bool _isDispose;
         public MemoryPool(int count = 100, Func<T> func = null, bool autoCreate = true)
         {
             _append = new object();
@@ -73,24 +74,33 @@ namespace API.Util
                 Monitor.Exit(_append);
             }
         }
+        private void Dispose(bool isDispose)
+        {
+            if(Monitor.TryEnter(this))
+            {
+                try
+                {
+                    _isDispose = isDispose;
+                    for (int i = 0; i < _pool.Count; i++)
+                    {
+                        var data = _pool.Dequeue();
+                        data.Dispose();
+                        data = default(T);
+                    }
+                    _pool.Clear();
+                    _pool = null;
+                }
+                finally
+                {
+                    Monitor.Exit(this);
+                }
+            }
+        }
         public void Dispose()
         {
-            try
-            {
-                Monitor.Enter(this);
-                for (int i = 0; i < _pool.Count; i++)
-                {
-                    var data = _pool.Dequeue();
-                    data.Dispose();
-                    data = default(T);
-                }
-                _pool.Clear();
-                _pool = null;
-            }
-            finally
-            {
-                Monitor.Exit(this);
-            }
+            if (_isDispose)
+                return;
+            Dispose(true);
         }
         public int CurrentCount { get => _pool.Count; }
         public int Count { get => _count; }

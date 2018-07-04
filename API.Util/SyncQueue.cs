@@ -8,13 +8,13 @@ namespace API.Util
     public class SyncQueue<T> : IDisposable
     {
         private Queue<T> _queue;
+        private bool _isDispose;
         private readonly object _append, _read;
         public SyncQueue()
         {
             _append = new object();
             _read = new object();
             _queue = new Queue<T>();
-            IsDispose = false;
         }
         public SyncQueue<T> Append(T item)
         {
@@ -54,14 +54,15 @@ namespace API.Util
                 {
                     throw new IndexOutOfRangeException();
                 }
-                var b = _queue.Peek();
-                Monitor.Exit(_read);
-                return b;
+                return _queue.Peek();
             }
             catch (Exception ex)
             {
-                Monitor.Exit(_read);
                 throw new Exception(ex.Message, ex);
+            }
+            finally
+            {
+                Monitor.Exit(_read);
             }
         }
         public T[] Peek(int offset, int length)
@@ -73,14 +74,15 @@ namespace API.Util
                 {
                     throw new IndexOutOfRangeException();
                 }
-                var b = _queue.Skip(offset).Take(length).ToArray();
-                Monitor.Exit(_read);
-                return b;
+                return _queue.Skip(offset).Take(length).ToArray();
             }
             catch (Exception ex)
             {
-                Monitor.Exit(_read);
                 throw new Exception(ex.Message, ex);
+            }
+            finally
+            {
+                Monitor.Exit(_read);
             }
         }
         public T Read()
@@ -133,31 +135,29 @@ namespace API.Util
         }
         public void Clear()
         {
-            try
+            if(Monitor.TryEnter(this))
             {
-                Monitor.Enter(this);
-                _queue.Clear();
+                try
+                {
+                    _queue.Clear();
+                }
+                finally
+                {
+                    Monitor.Exit(this);
+                }
             }
-            finally
-            {
-                Monitor.Exit(this);
-            }
+        }
+        private void Dispose(bool isDispose)
+        {
+            _isDispose = isDispose;
+            Clear();
+            _queue = null;
         }
         public void Dispose()
         {
-            if (IsDispose) return;
-            try
-            {
-                Monitor.Enter(this);
-                _queue.Clear();
-                _queue = null;
-                IsDispose = true;
-            }
-            finally
-            {
-                Monitor.Exit(this);
-            }
+            if (_isDispose)
+                return;
+            Dispose(true);
         }
-        public bool IsDispose { get; private set; }
     }
 }

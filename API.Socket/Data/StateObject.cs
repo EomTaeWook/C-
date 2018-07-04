@@ -1,7 +1,7 @@
 ﻿using API.Util;
 using System;
-using System.Diagnostics;
 using System.Net.Sockets;
+using System.Threading;
 namespace API.Socket.Data
 {
     public class StateObject : IDisposable
@@ -9,84 +9,42 @@ namespace API.Socket.Data
         public const int BufferSize = 2048;
 
         protected ulong _handle;
-
-        private System.Net.Sockets.Socket _workSocket = null;
-        private SyncQueue<byte> _receiveBuffer = null;
-        private SyncQueue<Packet> _packetBuffer = null;
         private SyncQueue<Packet> _sendBuffer = null;
 
-        public System.Net.Sockets.Socket WorkSocket { get => _workSocket; set => _workSocket = value; }
-        public SyncQueue<byte> ReceiveBuffer { get => _receiveBuffer; }
-        public SyncQueue<Packet> ReceivePacketBuffer { get => _packetBuffer; }
+        public System.Net.Sockets.Socket WorkSocket { get; set; } = null;
+        public SyncQueue<byte> ReceiveBuffer { get; } = null;
+        public SyncQueue<Packet> ReceivePacketBuffer { get; } = null;
         public ulong Handle { get => _handle; set => _handle = value; }
 
-        private SocketAsyncEventArgs _receiveAsync = null;
-        public SocketAsyncEventArgs ReceiveAsync
-        {
-            get { return _receiveAsync; }
-            set => _receiveAsync = value;
-        }
+        private SocketAsyncEventArgs _ioEvent;
         public StateObject()
         {
-            _receiveBuffer = new SyncQueue<byte>();
-            _packetBuffer = new SyncQueue<Packet>();
+            ReceiveBuffer = new SyncQueue<byte>();
+            ReceivePacketBuffer = new SyncQueue<Packet>();
             _sendBuffer = new SyncQueue<Packet>();
-
-            IsDispose = false;
+            _ioEvent = new SocketAsyncEventArgs();
         }
         public void Init()
         {
-            try
+            if (Monitor.TryEnter(this))
             {
-                lock (this)
+                try
                 {
                     _handle = 0;
-                    _receiveAsync = null;
-                    if (_workSocket != null)
-                    {
-                        lock (_workSocket)
-                        {
-                            try
-                            {
-                                _workSocket.Shutdown(SocketShutdown.Both);
-                            }
-                            catch (System.Exception ex)
-                            {
-                                Debug.WriteLine(ex.Message);
-                            }
-                            _workSocket.Close();
-                            _workSocket = null;
-                        }
-                    }
-
-                    if (!_receiveBuffer.IsDispose)
-                        _receiveBuffer.Clear();
-                    else
-                        throw new ObjectDisposedException("RecieveQueue is Disposed");
-                    if (!_packetBuffer.IsDispose)
-                        _packetBuffer.Clear();
-                    else
-                        throw new ObjectDisposedException("PacketQueue is Disposed");
-                    if (!_sendBuffer.IsDispose)
-                        _sendBuffer.Clear();
-                    else
-                        throw new ObjectDisposedException("SendQueue is Disposed");
+                    _ioEvent.SocketError = SocketError.OperationAborted;
+                    WorkSocket.Shutdown(SocketShutdown.Send);
+                    WorkSocket.Shutdown(SocketShutdown.Receive);
+                    WorkSocket.Shutdown(SocketShutdown.Both);
+                    WorkSocket.Close();
+                    WorkSocket = null;
+                    ReceiveBuffer.Clear();
+                    ReceivePacketBuffer.Clear();
+                    _sendBuffer.Clear();
                 }
-            }
-            catch (System.Exception ex)
-            {
-                throw ex;
-            }
-        }
-        public bool IsConnect()
-        {
-            if (_workSocket != null)
-            {
-                return _workSocket.Connected;
-            }
-            else
-            {
-                return false;
+                finally
+                {
+                    Monitor.Exit(this);
+                }
             }
         }
         public void Send(Packet packet)
@@ -114,86 +72,67 @@ namespace API.Socket.Data
                 {
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
-                Packet packet = _sendBuffer.Peek();
-                WorkSocket.BeginSend(packet.GetBytes(), 0, packet.GetBytes().Length, 0, new AsyncCallback(SendCallback), this);
+                byte[] packet = _sendBuffer.Peek().GetBytes();
+                _ioEvent.SetBuffer(0, packet.Length);
+                packet.CopyTo(_ioEvent.Buffer, 0);
+                bool pending = WorkSocket.SendAsync(_ioEvent);
+                if (!pending)
+                {
+                    ProcessSend(_ioEvent);
+                }
             }
             catch (System.Exception ex)
             {
                 throw new Exception.Exception("State Send Exception :" + ex.Message);
             }
         }
-        private void SendCallback(IAsyncResult ar)
+        private void ProcessSend(SocketAsyncEventArgs e)
         {
-            StateObject handler = (StateObject)ar.AsyncState;
             try
             {
-                if (handler.WorkSocket != null)
+                if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
-                    int bytesSent = handler.WorkSocket.EndSend(ar);
-                    if (_sendBuffer.Count() > 0)
-                    {
-                        var packet = _sendBuffer.Read();
-                        packet.Dispose();
-                        packet = null;
-                    }
+                    _sendBuffer.Read().Dispose();
                     if (_sendBuffer.Count() > 0)
                     {
                         BeginSend();
                     }
                 }
             }
-            catch (SocketException ex)
+            catch (System.Exception)
             {
-                Debug.WriteLine("Send SocketException : " + ex.Message);
             }
-            catch (ObjectDisposedException ex)
+        }
+        private void Send_Completed(object sender, SocketAsyncEventArgs e)
+        {
+            if (e.LastOperation == SocketAsyncOperation.Send)
             {
-                Debug.WriteLine("Send ObjectDisposedException : " + ex.Message);
+                ProcessSend(e);
             }
-            catch (Exception.Exception ex)
+        }
+        private void Dispose(bool IsDispose)
+        {
+            if (IsDispose)
+                return;
+            if (Monitor.TryEnter(this))
             {
-                Debug.WriteLine("Send Callback Exception : " + ex.GetErrorMessage());
-            }
-            catch (System.Exception ex)
-            {
-                Debug.WriteLine("Send Callback System.Exception : " + ex.Message);
+                try
+                {
+                    IsDispose = true;
+                    Init();
+                    ReceiveBuffer.Dispose();
+                    ReceivePacketBuffer.Dispose();
+                    _sendBuffer.Dispose();
+                }
+                finally
+                {
+                    Monitor.Exit(this);
+                }
             }
         }
         public void Dispose()
         {
-            if (IsDispose) return;
-            try
-            {
-                lock (this)
-                {
-                    if (ReceiveAsync != null)
-                    {
-                        ReceiveAsync.SocketError = SocketError.Shutdown;
-                        ReceiveAsync.SetBuffer(null, 0, 0);
-                    }
-                    if (WorkSocket != null)
-                    {
-                        WorkSocket.Shutdown(SocketShutdown.Both);
-                        WorkSocket.Close();
-                        WorkSocket = null;
-                    }
-                    _receiveBuffer.Clear();
-                    _receiveBuffer.Dispose();
-
-                    _packetBuffer.Clear();
-                    _packetBuffer.Dispose();
-
-                    _sendBuffer.Clear();
-                    _sendBuffer.Dispose();
-
-                    IsDispose = true;
-                }
-            }
-            catch (Exception.Exception ex)
-            {
-                throw new Exception.Exception("State Dispose :" + ex.Message);
-            }
+            Dispose(true);
         }
-        public bool IsDispose { get; private set; }
     }
 }
