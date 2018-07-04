@@ -6,32 +6,32 @@ using System.Threading.Tasks;
 
 namespace API.Socket.ClientSocket
 {
-    public abstract class ClientSocket<FuncKeyType> : ClientBase
+    public abstract class ClientSocket<ProtocolType> : ClientBase
     {
-        private Dictionary<FuncKeyType, MulticastDelegate> _funcMap;
+        private Dictionary<ProtocolType, MulticastDelegate> _funcMap;
         protected ClientSocket()
         {
-            _funcMap = new Dictionary<FuncKeyType, MulticastDelegate>();
+            _funcMap = new Dictionary<ProtocolType, MulticastDelegate>();
         }
-        public void BindCallback<T>(FuncKeyType key, Action<T> func)
+        public void BindCallback<T>(ProtocolType protocol, Action<T> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public void BindCallback<T, T1>(FuncKeyType key, Action<T, T1> func)
+        public void BindCallback<T, T1>(ProtocolType protocol, Action<T, T1> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public void BindCallback<T, T1, T2>(FuncKeyType key, Action<T, T1, T2> func)
+        public void BindCallback<T, T1, T2>(ProtocolType protocol, Action<T, T1, T2> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public void RunCallback(FuncKeyType key, params object[] param)
+        public void RunCallback(ProtocolType protocol, params object[] param)
         {
             try
             {
-                if (!_funcMap.ContainsKey(key))
+                if (!_funcMap.ContainsKey(protocol))
                     throw new KeyNotFoundException();
-                _funcMap[key].DynamicInvoke(param);
+                _funcMap[protocol].DynamicInvoke(param);
             }
             catch (System.Exception ex)
             {

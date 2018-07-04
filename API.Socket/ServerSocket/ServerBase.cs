@@ -63,7 +63,6 @@ namespace API.Socket.ServerSocket
             ioEvent.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
             return ioEvent;
         }
-
         private void IO_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.LastOperation == SocketAsyncOperation.Receive)
@@ -83,30 +82,20 @@ namespace API.Socket.ServerSocket
 #endif
                     state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
                     Recieved(state);
-                    bool pending = state.WorkSocket.ReceiveAsync(e);
-                    if (!pending)
-                    {
-                        ProcessReceive(e);
-                    }
                 }
                 else
                 {
                     ClosePeer(state);
+                    return;
                 }
             }
-            catch (SocketException ex)
+            catch (System.Exception)
             {
-                ClosePeer(state);
-#if DEBUG
-                Debug.WriteLine("ReadCallback SocketException : Handler : " + state.Handle + " Close Message : " + ex.Message);
-#endif
+                state.ReceiveBuffer.Clear();
             }
-            catch (System.Exception ex)
-            {
-#if DEBUG
-                Debug.WriteLine("ReadCallback System.Exception : Handler : " + state.Handle + " Close Message : " + ex.Message);
-#endif
-            }
+            bool pending = state.WorkSocket.ReceiveAsync(e);
+            if (!pending)
+                ProcessReceive(e);
         }
         public void Close()
         {
@@ -140,13 +129,13 @@ namespace API.Socket.ServerSocket
             {
                 listener.Bind(_iPEndPoint);
                 listener.Listen(200);
-                
+
                 while (_isRunning)
                 {
                     _acceptEvent.AcceptSocket = null;
                     _allDone.Reset();
                     var pending = listener.AcceptAsync(_acceptEvent);
-                    if(!pending)
+                    if (!pending)
                     {
                         Accept_Completed(null, _acceptEvent);
                     }
@@ -164,7 +153,7 @@ namespace API.Socket.ServerSocket
             if (e.SocketError == SocketError.Success)
             {
                 var io = _ioEventPool.Pop();
-                
+
                 state = (io.UserToken as StateObject);
                 try
                 {
@@ -175,9 +164,7 @@ namespace API.Socket.ServerSocket
 
                     bool pending = state.WorkSocket.ReceiveAsync(io);
                     if (!pending)
-                    {
                         ProcessReceive(io);
-                    }
                 }
                 catch (System.Exception ex)
                 {
@@ -211,7 +198,6 @@ namespace API.Socket.ServerSocket
                 {
                     Monitor.Exit(_readMutex);
                 }
-                
             }
             catch (Exception.Exception ex)
             {

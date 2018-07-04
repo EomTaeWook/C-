@@ -21,8 +21,8 @@ namespace API.Socket.ClientSocket
         private int port;
         private readonly object _closePeerObj;
         #region abstract
-        protected abstract void DisconnectedEvent();
-        protected abstract void ConnectCompleteEvent(StateObject state);
+        protected abstract void Disconnected();
+        protected abstract void Connected(StateObject state);
         protected abstract void Recieved(StateObject state);
         #endregion abstract
         protected ClientBase()
@@ -52,7 +52,7 @@ namespace API.Socket.ClientSocket
                         handler.EndConnect(asyncResult);
                         _stateObject.WorkSocket = handler;
                         BeginReceive(_stateObject);
-                        ConnectCompleteEvent(_stateObject);
+                        Connected(_stateObject);
                     }
                     else
                     {
@@ -91,28 +91,27 @@ namespace API.Socket.ClientSocket
         }
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
+            StateObject state = e.UserToken as StateObject;
             try
             {
-                StateObject state = e.UserToken as StateObject;
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
                     state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
                     Recieved(state);
-                    bool pending = state.WorkSocket.ReceiveAsync(e);
-                    if (!pending)
-                    {
-                        ProcessReceive(e);
-                    }
                 }
                 else
                 {
                     ClosePeer();
+                    return;
                 }
             }
             catch (System.Exception)
             {
-                ClosePeer();
+                state.ReceiveBuffer.Clear();
             }
+            bool pending = state.WorkSocket.ReceiveAsync(e);
+            if (!pending)
+                ProcessReceive(e);
         }
         private void Receive_Completed(object sender, SocketAsyncEventArgs e)
         {
@@ -147,7 +146,7 @@ namespace API.Socket.ClientSocket
                         {
                             _ioEvent.SocketError = SocketError.Shutdown;
                             _stateObject.Init();
-                            DisconnectedEvent();
+                            Disconnected();
                         }
                     }
                     finally

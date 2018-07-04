@@ -2,6 +2,7 @@
 using System;
 using System.Net.Sockets;
 using System.Threading;
+
 namespace API.Socket.Data
 {
     public class StateObject : IDisposable
@@ -23,7 +24,9 @@ namespace API.Socket.Data
             ReceivePacketBuffer = new SyncQueue<Packet>();
             _sendBuffer = new SyncQueue<Packet>();
             _ioEvent = new SocketAsyncEventArgs();
+            _ioEvent.Completed += Send_Completed;
         }
+
         public void Init()
         {
             if (Monitor.TryEnter(this))
@@ -31,6 +34,7 @@ namespace API.Socket.Data
                 try
                 {
                     _handle = 0;
+
                     _ioEvent.SocketError = SocketError.OperationAborted;
                     WorkSocket.Shutdown(SocketShutdown.Send);
                     WorkSocket.Shutdown(SocketShutdown.Receive);
@@ -73,8 +77,7 @@ namespace API.Socket.Data
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
                 byte[] packet = _sendBuffer.Peek().GetBytes();
-                _ioEvent.SetBuffer(0, packet.Length);
-                packet.CopyTo(_ioEvent.Buffer, 0);
+                _ioEvent.SetBuffer(packet, 0, packet.Length);
                 bool pending = WorkSocket.SendAsync(_ioEvent);
                 if (!pending)
                 {
@@ -103,6 +106,7 @@ namespace API.Socket.Data
             {
             }
         }
+
         private void Send_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.LastOperation == SocketAsyncOperation.Send)

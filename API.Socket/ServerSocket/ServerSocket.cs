@@ -7,35 +7,35 @@ using System.Threading.Tasks;
 
 namespace API.Socket.ServerSocket
 {
-    public abstract class ServerSocket<FuncKeyType> : ServerBase
+    public abstract class ServerSocket<ProtocolType> : ServerBase
     {
-        private Dictionary<FuncKeyType, MulticastDelegate> _funcMap;
+        private Dictionary<ProtocolType, MulticastDelegate> _funcMap;
         protected ServerSocket()
         {
-            _funcMap = new Dictionary<FuncKeyType, MulticastDelegate>();
+            _funcMap = new Dictionary<ProtocolType, MulticastDelegate>();
         }
-        public void BindCallback<T>(FuncKeyType key, Action<StateObject, T> func)
+        public void BindCallback<T>(ProtocolType protocol, Action<StateObject, T> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public void BindCallback<T, T1>(FuncKeyType key, Action<StateObject, T, T1> func)
+        public void BindCallback<T, T1>(ProtocolType protocol, Action<StateObject, T, T1> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public void BindCallback<T, T1, T2>(FuncKeyType key, Action<StateObject, T, T1, T2> func)
+        public void BindCallback<T, T1, T2>(ProtocolType protocol, Action<StateObject, T, T1, T2> callback)
         {
-            _funcMap.Add(key, func);
+            _funcMap.Add(protocol, callback);
         }
-        public bool RunCallback(FuncKeyType key, StateObject stateObject, params object[] param)
+        public bool RunCallback(ProtocolType protocol, StateObject stateObject, params object[] param)
         {
             try
             {
-                if (!_funcMap.ContainsKey(key))
+                if (!_funcMap.ContainsKey(protocol))
                     throw new KeyNotFoundException();
                 object[] parameter = { stateObject };
                 if (param != null)
                     parameter = parameter.Concat(param).ToArray();
-                _funcMap[key].DynamicInvoke(parameter);
+                _funcMap[protocol].DynamicInvoke(parameter);
                 return true;
             }
             catch (System.Exception ex)

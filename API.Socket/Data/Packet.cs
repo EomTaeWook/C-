@@ -9,7 +9,7 @@ namespace API.Socket.Data
 {
     public class Packet : IDisposable
     {
-        private byte[] _data;
+        private byte[] _buff;
         private bool _isDispose;
         public Packet()
         {
@@ -24,17 +24,17 @@ namespace API.Socket.Data
         }
         public virtual byte[] GetBytes()
         {
-            return _data;
+            return _buff;
         }
         public virtual byte[] Data
         {
             get
             {
-                if (_data == null)
-                    _data = new byte[0];
-                return _data;
+                if (_buff == null)
+                    _buff = new byte[0];
+                return _buff;
             }
-            set => _data = value;
+            set => _buff = value;
         }
     }
 }
