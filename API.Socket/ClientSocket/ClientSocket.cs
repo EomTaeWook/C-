@@ -25,14 +25,13 @@ namespace API.Socket.ClientSocket
         {
             _funcMap.Add(key, func);
         }
-        public bool RunCallback(FuncKeyType key, params object[] param)
+        public void RunCallback(FuncKeyType key, params object[] param)
         {
             try
             {
                 if (!_funcMap.ContainsKey(key))
                     throw new KeyNotFoundException();
                 _funcMap[key].DynamicInvoke(param);
-                return true;
             }
             catch (System.Exception ex)
             {

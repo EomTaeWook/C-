@@ -29,13 +29,6 @@ namespace API.Socket.ServerSocket
         protected abstract void Disconnected(ulong handerKey);
         protected abstract void Recieved(StateObject state);
         public virtual void BroadCast(Packet packet, StateObject state) { }
-        protected virtual void ForwardFunc(Packet packet, StateObject stateObject) { }
-        protected virtual void CallbackComplete(Packet packet, StateObject stateObject) { }
-        protected virtual bool PacketConversionComplete(Packet packet, StateObject handler, out object[] arg)
-        {
-            arg = null;
-            return true;
-        }
         #endregion
         protected ServerBase() : this(1000)
         {
@@ -280,8 +273,10 @@ namespace API.Socket.ServerSocket
         {
             try
             {
-                if (ip == "") _iPEndPoint = new IPEndPoint(IPAddress.Any, port);
-                else _iPEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+                if (ip == "")
+                    _iPEndPoint = new IPEndPoint(IPAddress.Any, port);
+                else
+                    _iPEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
             }
             catch (System.Exception ex)
             {
@@ -320,15 +315,13 @@ namespace API.Socket.ServerSocket
                 if (packet == null) return;
                 handler.Send(packet);
             }
-            catch (Exception.Exception ex)
+            catch (Exception.Exception)
             {
-                Debug.WriteLine("Send Exception : " + ex.GetErrorMessage());
                 ClosePeer(handler);
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
                 ClosePeer(handler);
-                Debug.WriteLine(ex.Message);
             }
         }
     }

@@ -19,6 +19,7 @@ namespace API.Socket.ClientSocket
         private SocketAsyncEventArgs _receive_Args;
         private string ip;
         private int port;
+        private readonly object _closePeerObj;
         #region abstract
         protected abstract void DisconnectedEvent();
         protected abstract void ConnectCompleteEvent(StateObject state);
@@ -26,6 +27,7 @@ namespace API.Socket.ClientSocket
         #endregion abstract
         protected ClientBase()
         {
+            _closePeerObj = new object();
             Init();
         }
         public void Close()
@@ -37,6 +39,7 @@ namespace API.Socket.ClientSocket
         {
             try
             {
+                if (IsConnect()) return;
                 this.ip = ip;
                 this.port = port;
                 _remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
@@ -47,16 +50,19 @@ namespace API.Socket.ClientSocket
                     if (asyncResult.AsyncWaitHandle.WaitOne(timeout, true))
                     {
                         handler.EndConnect(asyncResult);
-                        StateObject state = (StateObject)_receive_Args.UserToken;
-                        state.WorkSocket = handler;
-                        BeginReceive(state);
-                        ConnectCompleteEvent(state);
+                        _stateObject.WorkSocket = handler;
+                        BeginReceive(_stateObject);
+                        ConnectCompleteEvent(_stateObject);
                     }
                     else
                     {
                         _stateObject.Init();
                         throw new SocketException(10060);
                     }
+                }
+                else
+                {
+                    _stateObject.Init();
                 }
             }
             catch (ArgumentNullException arg)
@@ -74,7 +80,7 @@ namespace API.Socket.ClientSocket
         }
         private void BeginReceive(StateObject state)
         {
-            _stateObject.ReceiveAsync = _receive_Args;
+            state.ReceiveAsync = _receive_Args;
             if (state.WorkSocket != null)
             {
                 bool pending = state.WorkSocket.ReceiveAsync(_receive_Args);
@@ -84,7 +90,6 @@ namespace API.Socket.ClientSocket
                 }
             }
         }
-
         private void Receive_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.LastOperation == SocketAsyncOperation.Receive)
@@ -107,18 +112,12 @@ namespace API.Socket.ClientSocket
                 }
                 else
                 {
-#if DEBUG
-                    Debug.WriteLine(string.Format("error {0},  transferred {1}", e.SocketError, e.BytesTransferred));
-#endif
                     ClosePeer();
                 }
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
                 ClosePeer();
-#if DEBUG
-                Debug.WriteLine("Process_Receive : " + ex.Message);
-#endif
             }
         }
         private void Init()
@@ -140,34 +139,33 @@ namespace API.Socket.ClientSocket
         {
             try
             {
-                try
+                if (Monitor.TryEnter(_closePeerObj))
                 {
-                    Monitor.Enter(this);
-                    if (_receive_Args != null)
+                    try
                     {
-                        _receive_Args.SocketError = SocketError.Shutdown;
-                        _stateObject.Init();
+                        if (_receive_Args != null && _stateObject.WorkSocket != null)
+                        {
+                            _receive_Args.SocketError = SocketError.Shutdown;
+                            _stateObject.Init();
+                            DisconnectedEvent();
+                        }
                     }
-                }
-                finally
-                {
-                    Monitor.Exit(this);
+                    finally
+                    {
+                        Monitor.Exit(_closePeerObj);
+                    }
                 }
             }
             catch (Exception.Exception ex)
             {
                 Debug.WriteLine(ex.Message);
             }
-            finally
-            {
-                DisconnectedEvent();
-            }
         }
         public bool IsConnect()
         {
             if (_stateObject == null) return false;
             if (_stateObject.WorkSocket == null) return false;
-            return _stateObject.WorkSocket.Connected;
+            return !(_stateObject.WorkSocket.Poll(1000, SelectMode.SelectRead) && _stateObject.WorkSocket.Available == 0);
         }
         public void Send(Packet packet)
         {
@@ -180,19 +178,13 @@ namespace API.Socket.ClientSocket
                 if (packet == null) return;
                 _stateObject.Send(packet);
             }
-            catch (Exception.Exception ex)
+            catch (Exception.Exception)
             {
-#if DEBUG
-                Debug.WriteLine("Send Exception : " + ex.GetErrorMessage());
-#endif
                 ClosePeer();
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-#if DEBUG
                 ClosePeer();
-#endif
-                Debug.WriteLine("Send Exception : " + ex.Message);
             }
         }
     }

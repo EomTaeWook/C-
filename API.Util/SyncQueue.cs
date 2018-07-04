@@ -123,6 +123,10 @@ namespace API.Util
             }
             return items;
         }
+        public bool Contain(T item)
+        {
+            return _queue.Contains(item);
+        }
         public int Count()
         {
             return _queue.Count;
