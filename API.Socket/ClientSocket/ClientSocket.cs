@@ -13,17 +13,17 @@ namespace API.Socket.ClientSocket
         {
             _funcMap = new Dictionary<ProtocolType, MulticastDelegate>();
         }
-        public void BindCallback<T>(ProtocolType protocol, Action<T> callback)
+        public void BindCallback<T>(ProtocolType protocol, Action<T> func)
         {
-            _funcMap.Add(protocol, callback);
+            _funcMap.Add(protocol, func);
         }
-        public void BindCallback<T, T1>(ProtocolType protocol, Action<T, T1> callback)
+        public void BindCallback<T, T1>(ProtocolType protocol, Action<T, T1> func)
         {
-            _funcMap.Add(protocol, callback);
+            _funcMap.Add(protocol, func);
         }
-        public void BindCallback<T, T1, T2>(ProtocolType protocol, Action<T, T1, T2> callback)
+        public void BindCallback<T, T1, T2>(ProtocolType protocol, Action<T, T1, T2> func)
         {
-            _funcMap.Add(protocol, callback);
+            _funcMap.Add(protocol, func);
         }
         public void RunCallback(ProtocolType protocol, params object[] param)
         {

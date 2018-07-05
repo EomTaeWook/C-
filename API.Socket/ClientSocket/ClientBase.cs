@@ -92,6 +92,7 @@ namespace API.Socket.ClientSocket
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
             StateObject state = e.UserToken as StateObject;
+            bool pending = false;
             try
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
@@ -104,12 +105,12 @@ namespace API.Socket.ClientSocket
                     ClosePeer();
                     return;
                 }
+                pending = state.WorkSocket.ReceiveAsync(e);
             }
             catch (System.Exception)
             {
                 state.ReceiveBuffer.Clear();
             }
-            bool pending = state.WorkSocket.ReceiveAsync(e);
             if (!pending)
                 ProcessReceive(e);
         }
@@ -118,7 +119,7 @@ namespace API.Socket.ClientSocket
             if (e.LastOperation == SocketAsyncOperation.Receive)
                 ProcessReceive(e);
         }
-        
+
         private void Init()
         {
             try
@@ -177,12 +178,14 @@ namespace API.Socket.ClientSocket
                 if (packet == null) return;
                 _stateObject.Send(packet);
             }
-            catch (Exception.Exception)
+            catch (Exception.Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 ClosePeer();
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 ClosePeer();
             }
         }

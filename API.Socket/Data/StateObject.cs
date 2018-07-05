@@ -29,7 +29,7 @@ namespace API.Socket.Data
 
         public void Init()
         {
-            if (Monitor.TryEnter(this))
+            if (Monitor.TryEnter(WorkSocket))
             {
                 try
                 {
@@ -47,7 +47,7 @@ namespace API.Socket.Data
                 }
                 finally
                 {
-                    Monitor.Exit(this);
+                    Monitor.Exit(WorkSocket);
                 }
             }
         }
@@ -63,13 +63,13 @@ namespace API.Socket.Data
                 }
                 _sendBuffer.Append(packet);
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                throw new Exception.Exception(ex.Message);
             }
         }
         private void BeginSend()
         {
+            bool pending = false;
             try
             {
                 if (WorkSocket == null || !WorkSocket.Connected)
@@ -77,17 +77,15 @@ namespace API.Socket.Data
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
                 }
                 byte[] packet = _sendBuffer.Peek().GetBytes();
-                _ioEvent.SetBuffer(packet, 0, packet.Length);
-                bool pending = WorkSocket.SendAsync(_ioEvent);
-                if (!pending)
-                {
-                    ProcessSend(_ioEvent);
-                }
+                _ioEvent.SetBuffer(packet,0, packet.Length);
+                pending = WorkSocket.SendAsync(_ioEvent);
             }
             catch (System.Exception ex)
             {
                 throw new Exception.Exception("State Send Exception :" + ex.Message);
             }
+            if (!pending)
+                ProcessSend(_ioEvent);
         }
         private void ProcessSend(SocketAsyncEventArgs e)
         {
