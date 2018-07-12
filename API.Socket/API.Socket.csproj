@@ -47,11 +47,9 @@
   <ItemGroup>
     <Compile Include="ClientSocket\ClientBase.cs" />
     <Compile Include="ClientSocket\ClientSocket.cs" />
-    <Compile Include="Data\Enum\MsgType.cs" />
-    <Compile Include="Data\Enum\VertifyResult.cs" />
     <Compile Include="Data\SyncCount.cs" />
     <Compile Include="Data\Packet.cs" />
-    <Compile Include="Data\StateObject.cs" />
+    <Compile Include="Base\StateObject.cs" />
     <Compile Include="Exception\ErrorCode.cs" />
     <Compile Include="Exception\Exception.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

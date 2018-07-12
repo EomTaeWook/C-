@@ -1,4 +1,5 @@
-﻿using API.Socket.Data;
+﻿using API.Socket.Base;
+using API.Socket.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,19 +35,26 @@ namespace Test
             base.Start(10000);
         }
 
-        protected override void Accepted(StateObject state)
+        protected override void OnAccepted(StateObject state)
         {
             count++;
+            var packet = new Packet();
+            packet.GetHeader().Protocol = 1234;
+
+            packet.Data = Encoding.Default.GetBytes("test");
+            packet.GetHeader().DataSize = 4;
+
+            state.Send(packet);
             Console.WriteLine("COUNT : " + count  + " : " + state.Handle);
         }
 
-        protected override void Disconnected(ulong handerKey)
+        protected override void OnDisconnected(ulong handerKey)
         {
             count--;
             Console.WriteLine("DIS COUNT : " + count);
         }
 
-        protected override void Recieved(StateObject state)
+        protected override void OnRecieved(StateObject state)
         {
             if (state.ReceiveBuffer.Count() >= 16)
             {

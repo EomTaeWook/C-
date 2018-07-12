@@ -32,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="API.Socket">
-      <HintPath>..\API.Socket\bin\Debug\API.Socket.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -54,6 +51,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\API.Socket\API.Socket.csproj">
+      <Project>{ab8b6150-a7e6-44af-b976-9558dc9ec4c5}</Project>
+      <Name>API.Socket</Name>
+    </ProjectReference>
     <ProjectReference Include="..\API.Util\API.Util.csproj">
       <Project>{f200fba8-1c4d-40ae-b711-4610c8176ab3}</Project>
       <Name>API.Util</Name>

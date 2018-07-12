@@ -8,6 +8,7 @@ using System.Net;
 using System.Collections.Generic;
 using API.Util;
 using API.Socket.Data;
+using API.Socket.Base;
 
 namespace API.Socket.ServerSocket
 {
@@ -26,9 +27,9 @@ namespace API.Socket.ServerSocket
         private readonly object _deleteMutex;
 
         #region abstract | virtual
-        protected abstract void Accepted(StateObject state);
-        protected abstract void Disconnected(ulong handerKey);
-        protected abstract void Recieved(StateObject state);
+        protected abstract void OnAccepted(StateObject state);
+        protected abstract void OnDisconnected(ulong handerKey);
+        protected abstract void OnRecieved(StateObject state);
         public virtual void BroadCast(Packet packet, StateObject state) { }
         #endregion
         protected ServerBase() : this(1000)
@@ -82,14 +83,14 @@ namespace API.Socket.ServerSocket
                     Debug.WriteLine("handler {0}: Read {1}", state.Handle, e.BytesTransferred);
 #endif
                     state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
-                    Recieved(state);
+                    OnRecieved(state);
                 }
                 else
                 {
                     ClosePeer(state);
                     return;
                 }
-                pending = state.WorkSocket.ReceiveAsync(e);
+                pending = state.Socket.ReceiveAsync(e);
             }
             catch (System.Exception)
             {
@@ -164,10 +165,10 @@ namespace API.Socket.ServerSocket
                 {
                     System.Net.Sockets.Socket sock = e.AcceptSocket;
                     state.Handle = _acceptCount.CountAdd();
-                    state.WorkSocket = sock;
+                    state.Socket = sock;
                     AddPeer(io);
 
-                    bool pending = state.WorkSocket.ReceiveAsync(io);
+                    bool pending = state.Socket.ReceiveAsync(io);
                     if (!pending)
                         ProcessReceive(io);
                 }
@@ -197,7 +198,7 @@ namespace API.Socket.ServerSocket
                         return;
                     }
                     _useIOEvents.Add(state.Handle, ioEvent);
-                    Accepted(state);
+                    OnAccepted(state);
                 }
                 finally
                 {
@@ -225,7 +226,7 @@ namespace API.Socket.ServerSocket
                     _useIOEvents.Remove(handle);
                 }
                 state.Init();
-                Disconnected(handle);
+                OnDisconnected(handle);
             }
             finally
             {
@@ -271,7 +272,7 @@ namespace API.Socket.ServerSocket
         {
             try
             {
-                if (stateObject.WorkSocket == null)
+                if (stateObject.Socket == null)
                 {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
                 }

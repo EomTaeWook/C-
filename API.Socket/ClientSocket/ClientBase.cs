@@ -1,4 +1,5 @@
-﻿using API.Socket.Data;
+﻿using API.Socket.Base;
+using API.Socket.Data;
 using API.Socket.Exception;
 using System;
 using System.Collections.Generic;
@@ -21,9 +22,9 @@ namespace API.Socket.ClientSocket
         private int port;
         private readonly object _closePeerObj;
         #region abstract
-        protected abstract void Disconnected();
-        protected abstract void Connected(StateObject state);
-        protected abstract void Recieved(StateObject state);
+        protected abstract void OnDisconnected();
+        protected abstract void OnConnected(StateObject state);
+        protected abstract void OnRecieved(StateObject state);
         #endregion abstract
         protected ClientBase()
         {
@@ -43,16 +44,16 @@ namespace API.Socket.ClientSocket
                 this.ip = ip;
                 this.port = port;
                 _remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
-                if (_stateObject.WorkSocket == null)
+                if (_stateObject.Socket == null)
                 {
                     System.Net.Sockets.Socket handler = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     IAsyncResult asyncResult = handler.BeginConnect(_remoteEP, null, null);
                     if (asyncResult.AsyncWaitHandle.WaitOne(timeout, true))
                     {
                         handler.EndConnect(asyncResult);
-                        _stateObject.WorkSocket = handler;
+                        _stateObject.Socket = handler;
                         BeginReceive(_stateObject);
-                        Connected(_stateObject);
+                        OnConnected(_stateObject);
                     }
                     else
                     {
@@ -80,9 +81,9 @@ namespace API.Socket.ClientSocket
         }
         private void BeginReceive(StateObject state)
         {
-            if (state.WorkSocket != null)
+            if (state.Socket != null)
             {
-                bool pending = state.WorkSocket.ReceiveAsync(_ioEvent);
+                bool pending = state.Socket.ReceiveAsync(_ioEvent);
                 if (!pending)
                 {
                     ProcessReceive(_ioEvent);
@@ -91,21 +92,21 @@ namespace API.Socket.ClientSocket
         }
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
-            StateObject state = e.UserToken as StateObject;
+            var state = e.UserToken as StateObject;
             bool pending = false;
             try
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
                     state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
-                    Recieved(state);
+                    OnRecieved(state);
                 }
                 else
                 {
                     ClosePeer();
                     return;
                 }
-                pending = state.WorkSocket.ReceiveAsync(e);
+                pending = state.Socket.ReceiveAsync(e);
             }
             catch (System.Exception)
             {
@@ -143,11 +144,11 @@ namespace API.Socket.ClientSocket
                 {
                     try
                     {
-                        if (_ioEvent != null && _stateObject.WorkSocket != null)
+                        if (_ioEvent != null && _stateObject.Socket != null)
                         {
                             _ioEvent.SocketError = SocketError.Shutdown;
                             _stateObject.Init();
-                            Disconnected();
+                            OnDisconnected();
                         }
                     }
                     finally
@@ -164,14 +165,14 @@ namespace API.Socket.ClientSocket
         public bool IsConnect()
         {
             if (_stateObject == null) return false;
-            if (_stateObject.WorkSocket == null) return false;
-            return !(_stateObject.WorkSocket.Poll(1000, SelectMode.SelectRead) && _stateObject.WorkSocket.Available == 0);
+            if (_stateObject.Socket == null) return false;
+            return !(_stateObject.Socket.Poll(1000, SelectMode.SelectRead) && _stateObject.Socket.Available == 0);
         }
         public void Send(Packet packet)
         {
             try
             {
-                if (_stateObject.WorkSocket == null)
+                if (_stateObject.Socket == null)
                 {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
                 }
