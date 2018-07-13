@@ -5,28 +5,24 @@ namespace API.Socket.Data
     public class SyncCount
     {
         private ulong _count = 0;
-        private readonly object _mutex;
+        private readonly object _sync;
         public SyncCount()
         {
-            _mutex = new object();
+            _sync = new object();
         }
         public ulong CountAdd()
         {
             try
             {
-                Monitor.Enter(_mutex);
+                Monitor.Enter(_sync);
                 if (_count + 1 == 0)
-                {
                     _count = 1;
-                }
                 else
-                {
                     _count++;
-                }
             }
             finally
             {
-                Monitor.Exit(_mutex);
+                Monitor.Exit(_sync);
             }
             return _count;
         }
