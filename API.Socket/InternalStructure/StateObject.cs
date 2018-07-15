@@ -1,29 +1,30 @@
-﻿using API.Socket.Data;
+﻿using API.Socket.InternalStructure;
 using API.Util;
 using System;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace API.Socket.Base
+namespace API.Socket.InternalStructure
 {
     public class StateObject : IDisposable
     {
         public static readonly int BufferSize = 2048;
 
         protected ulong _handle;
-        private SyncQueue<Packet> _sendBuffer = null;
+        private SyncQueue<IPacket> _sendBuffer = null;
 
         public System.Net.Sockets.Socket Socket { get; set; } = null;
         public SyncQueue<byte> ReceiveBuffer { get; } = null;
-        public SyncQueue<Packet> ReceivePacketBuffer { get; } = null;
+        public SyncQueue<IPacket> ReceivePacketBuffer { get; } = null;
         public ulong Handle { get => _handle; set => _handle = value; }
 
         private SocketAsyncEventArgs _ioEvent;
+        private bool _isDispose;
         public StateObject()
         {
             ReceiveBuffer = new SyncQueue<byte>();
-            ReceivePacketBuffer = new SyncQueue<Packet>();
-            _sendBuffer = new SyncQueue<Packet>();
+            ReceivePacketBuffer = new SyncQueue<IPacket>();
+            _sendBuffer = new SyncQueue<IPacket>();
             _ioEvent = new SocketAsyncEventArgs();
             _ioEvent.Completed += Send_Completed;
         }
@@ -52,7 +53,7 @@ namespace API.Socket.Base
                 }
             }
         }
-        public void Send(Packet packet)
+        public void Send(IPacket packet)
         {
             try
             {
@@ -115,13 +116,11 @@ namespace API.Socket.Base
         }
         private void Dispose(bool IsDispose)
         {
-            if (IsDispose)
-                return;
             if (Monitor.TryEnter(this))
             {
                 try
                 {
-                    IsDispose = true;
+                    _isDispose = true;
                     Init();
                     ReceiveBuffer.Dispose();
                     ReceivePacketBuffer.Dispose();
@@ -135,6 +134,8 @@ namespace API.Socket.Base
         }
         public void Dispose()
         {
+            if (_isDispose)
+                return;
             Dispose(true);
         }
     }

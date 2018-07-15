@@ -5,17 +5,19 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Socket.Data
+namespace API.Socket.InternalStructure
 {
-    public class Packet : IDisposable
+    public class DefaultPacket : IPacket
     {
         private byte[] _buff;
         private bool _isDispose;
-        public Packet()
+        public DefaultPacket()
         {
         }
         public void Dispose()
         {
+            if (_isDispose)
+                return;
             Dispose(true);
         }
         private void Dispose(bool isDispose)

@@ -1,6 +1,5 @@
-﻿using API.Socket.Base;
-using API.Socket.Data;
-using API.Socket.Exception;
+﻿using API.Socket.Exception;
+using API.Socket.InternalStructure;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -168,7 +167,7 @@ namespace API.Socket.ClientSocket
             if (_stateObject.Socket == null) return false;
             return !(_stateObject.Socket.Poll(1000, SelectMode.SelectRead) && _stateObject.Socket.Available == 0);
         }
-        public void Send(Packet packet)
+        public void Send(IPacket packet)
         {
             try
             {

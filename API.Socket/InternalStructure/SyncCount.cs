@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace API.Socket.Data
+namespace API.Socket.InternalStructure
 {
     public class SyncCount
     {

@@ -7,8 +7,7 @@ using API.Socket.Exception;
 using System.Net;
 using System.Collections.Generic;
 using API.Util;
-using API.Socket.Data;
-using API.Socket.Base;
+using API.Socket.InternalStructure;
 
 namespace API.Socket.ServerSocket
 {
@@ -30,7 +29,7 @@ namespace API.Socket.ServerSocket
         protected abstract void OnAccepted(StateObject state);
         protected abstract void OnDisconnected(ulong handerKey);
         protected abstract void OnRecieved(StateObject state);
-        public virtual void BroadCast(Packet packet, StateObject state) { }
+        public virtual void BroadCast(IPacket packet, StateObject state) { }
         #endregion
         protected ServerBase() : this(1000)
         {
@@ -268,7 +267,7 @@ namespace API.Socket.ServerSocket
         {
             Start("", port);
         }
-        public void Send(StateObject stateObject, Packet packet)
+        public void Send(StateObject stateObject, IPacket packet)
         {
             try
             {
