@@ -8,7 +8,7 @@ namespace API.Util
     public class SyncQueue<T> : IDisposable
     {
         private Queue<T> _queue;
-        private bool _isDispose;
+        private bool _disposed;
         private readonly object _append, _read;
         public SyncQueue()
         {
@@ -149,13 +149,13 @@ namespace API.Util
         }
         private void Dispose(bool isDispose)
         {
-            _isDispose = isDispose;
             Clear();
             _queue = null;
+            _disposed = isDispose;
         }
         public void Dispose()
         {
-            if (_isDispose)
+            if (_disposed)
                 return;
             Dispose(true);
         }

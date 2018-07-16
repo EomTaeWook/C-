@@ -4,13 +4,13 @@ using System.Threading;
 
 namespace API.Util
 {
-    public class MemoryPool<T> : IDisposable where T : IDisposable, new()
+    public sealed class MemoryPool<T> : IDisposable where T : IDisposable, new()
     {
         protected int _count;
         protected Queue<T> _pool;
         protected readonly object _append, _read;
         private Func<T> _createT;
-        private bool _isDispose;
+        private bool _disposed;
         public MemoryPool(int count = 100, Func<T> func = null, bool autoCreate = true)
         {
             _append = new object();
@@ -80,7 +80,7 @@ namespace API.Util
             {
                 try
                 {
-                    _isDispose = isDispose;
+                    _disposed = isDispose;
                     for (int i = 0; i < _pool.Count; i++)
                     {
                         var data = _pool.Dequeue();
@@ -98,7 +98,7 @@ namespace API.Util
         }
         public void Dispose()
         {
-            if (_isDispose)
+            if (_disposed)
                 return;
             Dispose(true);
         }

@@ -19,7 +19,7 @@ namespace API.Socket.InternalStructure
         public ulong Handle { get => _handle; set => _handle = value; }
 
         private SocketAsyncEventArgs _ioEvent;
-        private bool _isDispose;
+        private bool _disposed;
         public StateObject()
         {
             ReceiveBuffer = new SyncQueue<byte>();
@@ -114,13 +114,13 @@ namespace API.Socket.InternalStructure
                 ProcessSend(e);
             }
         }
-        private void Dispose(bool IsDispose)
+        protected virtual void Dispose(bool IsDispose)
         {
             if (Monitor.TryEnter(this))
             {
                 try
                 {
-                    _isDispose = true;
+                    
                     Init();
                     ReceiveBuffer.Dispose();
                     ReceivePacketBuffer.Dispose();
@@ -134,9 +134,10 @@ namespace API.Socket.InternalStructure
         }
         public void Dispose()
         {
-            if (_isDispose)
+            if (_disposed)
                 return;
             Dispose(true);
+            _disposed = true;
         }
     }
 }

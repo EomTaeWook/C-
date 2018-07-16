@@ -10,19 +10,19 @@ namespace API.Socket.InternalStructure
     public class DefaultPacket : IPacket
     {
         private byte[] _buff;
-        private bool _isDispose;
+        private bool _disposed;
         public DefaultPacket()
         {
         }
         public void Dispose()
         {
-            if (_isDispose)
+            if (_disposed)
                 return;
             Dispose(true);
+            _disposed = true;
         }
-        private void Dispose(bool isDispose)
+        protected virtual void Dispose(bool isDispose)
         {
-            _isDispose = isDispose;
         }
         public virtual byte[] GetBytes()
         {
