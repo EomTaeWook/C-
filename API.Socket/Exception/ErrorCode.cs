@@ -14,6 +14,5 @@
 
         //10000
         SocketDisConnect = 10057,
-
     }
 }

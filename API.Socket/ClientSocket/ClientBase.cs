@@ -172,10 +172,9 @@ namespace API.Socket.ClientSocket
             try
             {
                 if (_stateObject.Socket == null)
-                {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
-                }
-                if (packet == null) return;
+                if (packet == null)
+                    throw new ArgumentNullException("packet");
                 _stateObject.Send(packet);
             }
             catch (Exception.Exception ex)

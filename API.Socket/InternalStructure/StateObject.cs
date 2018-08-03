@@ -75,9 +75,8 @@ namespace API.Socket.InternalStructure
             try
             {
                 if (Socket == null || !Socket.Connected)
-                {
                     throw new Exception.Exception(Exception.ErrorCode.SocketDisConnect, "");
-                }
+
                 byte[] packet = _sendBuffer.Peek().GetBytes();
                 _ioEvent.SetBuffer(packet, 0, packet.Length);
                 pending = Socket.SendAsync(_ioEvent);
@@ -120,7 +119,7 @@ namespace API.Socket.InternalStructure
             {
                 try
                 {
-                    
+
                     Init();
                     ReceiveBuffer.Dispose();
                     ReceivePacketBuffer.Dispose();
