@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ namespace Test
         static TestServer _server;
         static void Main(string[] args)
         {
+            MulticastDelegate
             _server = new TestServer();
             _server.Init();
             _server.Start();

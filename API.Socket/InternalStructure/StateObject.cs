@@ -31,7 +31,7 @@ namespace API.Socket.InternalStructure
 
         public void Init()
         {
-            if (Monitor.TryEnter(Socket))
+            if (Monitor.TryEnter(this))
             {
                 try
                 {
@@ -49,7 +49,7 @@ namespace API.Socket.InternalStructure
                 }
                 finally
                 {
-                    Monitor.Exit(Socket);
+                    Monitor.Exit(this);
                 }
             }
         }
