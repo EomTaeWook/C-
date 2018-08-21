@@ -11,15 +11,31 @@ namespace Test
     class Program
     {
         static TestServer _server;
+        static TestClient _client;
         static void Main(string[] args)
         {
-            MulticastDelegate
-            _server = new TestServer();
-            _server.Init();
-            _server.Start();
-            while(true)
+            //_server = new TestServer();
+            //_server.Init();
+
+            //_server.Start();
+
+            List<TestClient> list = new List<TestClient>();
+            for(int i=0; i<1000; i++)
             {
-                Thread.Sleep(1000);
+                list.Add(new TestClient());
+                list[i].Connect("127.0.0.1", 10000);
+            }
+            //_client = new TestClient();
+            //_client.Connect("127.0.0.1", 10000);
+            
+            while (true)
+            {
+                Parallel.ForEach(list,
+                    r => r.Send(new Packet(
+                        Encoding.Default.GetBytes($"When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.")))
+                    );
+                //_client.Send(new Packet(Encoding.Default.GetBytes($"When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.")));
+                Thread.Sleep(500);
             }
         }
     }

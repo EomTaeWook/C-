@@ -1,5 +1,4 @@
-﻿using API.Socket.Base;
-using API.Socket.Data;
+﻿using API.Socket.InternalStructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,9 +21,9 @@ namespace Test
         }
         private void Callback(StateObject stateObject, Packet packet)
         {
-            Send(stateObject, 123, "1234");
-            var str = Encoding.Default.GetString(packet.Data);
-            Console.WriteLine("Recive : " + str);
+            //Send(stateObject, 123, "1234");
+            //var str = Encoding.Default.GetString(packet.Data);
+            //Console.WriteLine("Recive : " + str);
         }
         public void Send(StateObject stateObject, int protocol, string json)
         {
@@ -37,15 +36,15 @@ namespace Test
 
         protected override void OnAccepted(StateObject state)
         {
-            count++;
-            var packet = new Packet();
-            packet.GetHeader().Protocol = 1234;
+            //count++;
+            //var packet = new Packet();
+            //packet.GetHeader().Protocol = 1234;
 
-            packet.Data = Encoding.Default.GetBytes("test");
-            packet.GetHeader().DataSize = 4;
+            //packet.Data = Encoding.Default.GetBytes("test");
+            //packet.GetHeader().DataSize = 4;
 
-            state.Send(packet);
-            Console.WriteLine("COUNT : " + count  + " : " + state.Handle);
+            //state.Send(packet);
+            //Console.WriteLine("COUNT : " + count  + " : " + state.Handle);
         }
 
         protected override void OnDisconnected(ulong handerKey)
@@ -56,23 +55,10 @@ namespace Test
 
         protected override void OnRecieved(StateObject state)
         {
-            if (state.ReceiveBuffer.Count() >= 16)
-            {
-                var packet = new Packet(state.ReceiveBuffer.Peek(0, 16));
-                if(packet.GetHeader().DataSize <= state.ReceiveBuffer.Count())
-                {
-                    packet.Data = state.ReceiveBuffer.Read(packet.GetHeader().DataSize).Skip(16).ToArray();
-                    if (state.ReceivePacketBuffer.Count() <= 0)
-                    {
-                        state.ReceivePacketBuffer.Append(packet);
-                        ThreadPool.QueueUserWorkItem(new WaitCallback(Work), state);
-                    }
-                    else
-                    {
-                        state.ReceivePacketBuffer.Append(packet);
-                    }
-                }
-            }
+            uint count = (uint)state.ReceiveBuffer.Count();
+            var receive = state.ReceiveBuffer.Read(count);
+            Console.WriteLine($"[ {DateTime.Now} ] Recieved : " + System.Text.Encoding.UTF8.GetString(receive));
+            state.Send(new Packet(receive));
         }
 
         private void Work(object state)
