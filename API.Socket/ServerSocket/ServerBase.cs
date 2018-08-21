@@ -70,10 +70,21 @@ namespace API.Socket.ServerSocket
                 ProcessReceive(e);
             }
         }
+        private void BeginReceive(SocketAsyncEventArgs e)
+        {
+            StateObject state = e.UserToken as StateObject;
+            if (state.Socket != null)
+            {
+                bool pending = state.Socket.ReceiveAsync(e);
+                if (!pending)
+                {
+                    ProcessReceive(e);
+                }
+            }
+        }
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
             StateObject state = e.UserToken as StateObject;
-            bool pending = false;
             try
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
@@ -89,14 +100,12 @@ namespace API.Socket.ServerSocket
                     ClosePeer(state);
                     return;
                 }
-                pending = state.Socket.ReceiveAsync(e);
             }
             catch (System.Exception)
             {
                 state.ReceiveBuffer.Clear();
             }
-            if (!pending)
-                ProcessReceive(e);
+            BeginReceive(e);
         }
         public void Close()
         {
@@ -138,12 +147,7 @@ namespace API.Socket.ServerSocket
                     var pending = listener.AcceptAsync(_acceptEvent);
 
                     if (!pending)
-
-                    {
-
                         Accept_Completed(null, _acceptEvent);
-
-                    }
                     _allDone.WaitOne();
                 }
             }
@@ -166,10 +170,7 @@ namespace API.Socket.ServerSocket
                     state.Handle = _acceptCount.CountAdd();
                     state.Socket = sock;
                     AddPeer(io);
-
-                    bool pending = state.Socket.ReceiveAsync(io);
-                    if (!pending)
-                        ProcessReceive(io);
+                    BeginReceive(io);
                 }
                 catch (System.Exception ex)
                 {
