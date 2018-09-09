@@ -36,13 +36,15 @@ namespace API.Socket.InternalStructure
                 try
                 {
                     _handle = 0;
-
                     _ioEvent.SocketError = SocketError.OperationAborted;
-                    Socket.Shutdown(SocketShutdown.Send);
-                    Socket.Shutdown(SocketShutdown.Receive);
-                    Socket.Shutdown(SocketShutdown.Both);
-                    Socket.Close();
-                    Socket = null;
+                    if (Socket != null)
+                    {
+                        Socket.Shutdown(SocketShutdown.Send);
+                        Socket.Shutdown(SocketShutdown.Receive);
+                        Socket.Shutdown(SocketShutdown.Both);
+                        Socket.Close();
+                        Socket = null;
+                    }
                     ReceiveBuffer.Clear();
                     ReceivePacketBuffer.Clear();
                     _sendBuffer.Clear();
