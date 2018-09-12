@@ -26,7 +26,7 @@ namespace API.Socket.ServerSocket
         {
             _funcMap.Add(protocol, func);
         }
-        public bool RunCallback(ProtocolType protocol, StateObject stateObject, params object[] param)
+        public bool OnCallback(ProtocolType protocol, StateObject stateObject, params object[] param)
         {
             try
             {

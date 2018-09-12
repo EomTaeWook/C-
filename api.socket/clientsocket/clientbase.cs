@@ -51,7 +51,7 @@ namespace API.Socket.ClientSocket
                     {
                         handler.EndConnect(asyncResult);
                         _stateObject.Socket = handler;
-                        BeginReceive(_stateObject);
+                        BeginReceive(_ioEvent);
                         OnConnected(_stateObject);
                     }
                     else
@@ -78,15 +78,14 @@ namespace API.Socket.ClientSocket
                 throw new Exception.Exception(e.Message);
             }
         }
-        private void BeginReceive(StateObject state)
+        private void BeginReceive(SocketAsyncEventArgs e)
         {
+            var state = e.UserToken as StateObject;
             if (state.Socket != null)
             {
                 bool pending = state.Socket.ReceiveAsync(_ioEvent);
                 if (!pending)
-                {
-                    ProcessReceive(_ioEvent);
-                }
+                    ProcessReceive(e);
             }
         }
         private void ProcessReceive(SocketAsyncEventArgs e)
@@ -109,7 +108,7 @@ namespace API.Socket.ClientSocket
             {
                 state.ReceiveBuffer.Clear();
             }
-            BeginReceive(state);
+            BeginReceive(e);
         }
         private void Receive_Completed(object sender, SocketAsyncEventArgs e)
         {

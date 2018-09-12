@@ -31,7 +31,7 @@ namespace API.Socket.ServerSocket
         protected abstract void OnRecieved(StateObject state);
         public virtual void BroadCast(IPacket packet, StateObject state) { }
         #endregion
-        protected ServerBase() : this(1000)
+        protected ServerBase() : this(5000)
         {
         }
         protected ServerBase(int poolCount)
@@ -77,9 +77,7 @@ namespace API.Socket.ServerSocket
             {
                 bool pending = state.Socket.ReceiveAsync(e);
                 if (!pending)
-                {
                     ProcessReceive(e);
-                }
             }
         }
         private void ProcessReceive(SocketAsyncEventArgs e)
@@ -169,6 +167,13 @@ namespace API.Socket.ServerSocket
                     System.Net.Sockets.Socket sock = e.AcceptSocket;
                     state.Handle = _acceptCount.CountAdd();
                     state.Socket = sock;
+                    var option = new TcpKeepAlive
+                    {
+                        OnOff = 1,
+                        KeepAliveTime = 5000,
+                        KeepAliveInterval = 1000
+                    };
+                    state.Socket.IOControl(IOControlCode.KeepAliveValues, option.GetBytes(), null);
                     AddPeer(io);
                     BeginReceive(io);
                 }
@@ -194,9 +199,7 @@ namespace API.Socket.ServerSocket
                     Monitor.Enter(_readMutex);
                     var state = (ioEvent.UserToken as StateObject);
                     if (_useIOEvents.ContainsKey(state.Handle))
-                    {
                         return;
-                    }
                     _useIOEvents.Add(state.Handle, ioEvent);
                     OnAccepted(state);
                 }
@@ -273,10 +276,9 @@ namespace API.Socket.ServerSocket
             try
             {
                 if (stateObject.Socket == null)
-                {
                     throw new Exception.Exception(ErrorCode.SocketDisConnect, "");
-                }
-                if (packet == null) return;
+                if (packet == null)
+                    return;
                 stateObject.Send(packet);
             }
             catch (Exception.Exception)
