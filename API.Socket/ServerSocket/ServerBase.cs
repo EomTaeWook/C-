@@ -179,9 +179,7 @@ namespace API.Socket.ServerSocket
                 }
                 catch (System.Exception ex)
                 {
-#if DEBUG
                     Debug.WriteLine("Accept Exception : " + ex.Message);
-#endif
                     ClosePeer(state);
                 }
                 finally

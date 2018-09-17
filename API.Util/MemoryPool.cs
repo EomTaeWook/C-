@@ -6,9 +6,9 @@ namespace API.Util
 {
     public sealed class MemoryPool<T> : IDisposable where T : IDisposable, new()
     {
-        protected int _count;
-        protected Queue<T> _pool;
-        protected readonly object _append, _read;
+        private int _count;
+        private Queue<T> _pool;
+        private readonly object _append, _read;
         private Func<T> _createT;
         private bool _disposed;
         public MemoryPool(int count = 100, Func<T> func = null, bool autoCreate = true)
