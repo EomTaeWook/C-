@@ -51,6 +51,13 @@ namespace API.Socket.ClientSocket
                     {
                         handler.EndConnect(asyncResult);
                         _stateObject.Socket = handler;
+                        var option = new TcpKeepAlive
+                        {
+                            OnOff = 1,
+                            KeepAliveTime = 5000,
+                            KeepAliveInterval = 1000
+                        };
+                        _stateObject.Socket.IOControl(IOControlCode.KeepAliveValues, option.GetBytes(), null);
                         BeginReceive(_ioEvent);
                         OnConnected(_stateObject);
                     }

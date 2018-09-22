@@ -41,13 +41,13 @@ namespace Test
             //    //list[i].Close();
             //}
             _client = new TestClient();
-            //_client.Connect("127.0.0.1", 10000);
-            //list[0].Send(new Packet(
-            //            Encoding.Default.GetBytes($"<When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.>")));
-            ulong temp = 0;
             _client.Connect("127.0.0.1", 10000);
             _client.Send(new Packet(
                         Encoding.Default.GetBytes($"<When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.>")));
+            ulong temp = 0;
+            //_client.Connect("127.0.0.1", 10000);
+            //_client.Send(new Packet(
+            //            Encoding.Default.GetBytes($"<When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.>")));
             while (true)
             {
                 //Parallel.ForEach(list,
