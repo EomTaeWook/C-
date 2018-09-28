@@ -42,7 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Crypto\DesCrypto.cs" />
-    <Compile Include="DesignPattern\Singleton.cs" />
+    <Compile Include="Common\Singleton.cs" />
+    <Compile Include="Logger\EnumLogger.cs" />
+    <Compile Include="Logger\FileLogger.cs" />
+    <Compile Include="Logger\LogMessage.cs" />
     <Compile Include="SyncQueue.cs" />
     <Compile Include="DoubleBuffer.cs" />
     <Compile Include="MemoryPool.cs" />

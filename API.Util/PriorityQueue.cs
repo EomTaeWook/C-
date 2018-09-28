@@ -11,10 +11,11 @@ namespace API.Util
     }
     public class PriorityQueue<T> : IEnumerable<T> where T : IComparable<T>
     {
-        private List<T> _list = new List<T>();
-        private Order _order;
+        private List<T> _list;
+        private readonly Order _order;
         public PriorityQueue(Order order = Order.Ascending)
         {
+            _list = new List<T>();
             _order = order;
         }
         public IEnumerator<T> GetEnumerator()
@@ -27,10 +28,7 @@ namespace API.Util
         }
         public int Count
         {
-            get
-            {
-                return _list.Count;
-            }
+            get => _list.Count;
         }
         public void Clear()
         {
@@ -47,37 +45,40 @@ namespace API.Util
         public T Read()
         {
             if (_list.Count == 0)
-            {
                 throw new IndexOutOfRangeException();
-            }
             T item = _list[0];
             _list[0] = _list[_list.Count - 1];
             _list.RemoveAt(_list.Count - 1);
             int index = 0;
+            int childIndex = 0;
             int size = _list.Count - 1;
             while (true)
             {
                 //Left Node Right Node
-                if (size > index * 2 + 1 && size > index * 2)
+                if (size > index * 2 + 1 && size > index * 2 + 2)
                 {
-                    var child = _list[index * 2 + 1].CompareTo(_list[index * 2]);
-                    int childIndex = 0;
-                    if (child > 0 && _order == Order.Ascending)
+                    var compare = _list[index * 2 + 1].CompareTo(_list[index * 2 + 2]);
+                    if (compare > 0 && _order == Order.Ascending)
                     {
                         childIndex = index * 2 + 1;
                     }
-                    else if (child < 0 && _order == Order.Ascending)
+                    else if (compare < 0 && _order == Order.Ascending)
                     {
-                        childIndex = index * 2;
+                        childIndex = index * 2 + 2;
                     }
-                    else if (child < 0 && _order == Order.Descending)
+                    else if (compare < 0 && _order == Order.Descending)
                     {
                         childIndex = index * 2 + 1;
                     }
-                    else if (child > 0 && _order == Order.Descending)
+                    else if (compare > 0 && _order == Order.Descending)
                     {
-                        childIndex = index * 2;
+                        childIndex = index * 2 + 2;
                     }
+                    else if(compare == 0)
+                    {
+                        childIndex = index * 2 + 1;
+                    }
+
                     if (_list[index].CompareTo(_list[childIndex]) < 0 && _order == Order.Ascending)
                     {
                         Swap(index, childIndex);
@@ -94,16 +95,16 @@ namespace API.Util
                 //Left Node
                 else if (_list.Count > index * 2 + 1)
                 {
-                    var order = _list[index].CompareTo(_list[index * 2 + 1]);
-                    if (order < 0 && _order == Order.Ascending)
+                    childIndex = index * 2 + 1;
+                    if (_list[index].CompareTo(_list[childIndex]) < 0 && _order == Order.Ascending)
                     {
-                        Swap(index, index * 2 + 1);
-                        index = index * 2 + 1;
+                        Swap(index, childIndex);
+                        index = childIndex;
                     }
-                    else if (order > 0 && _order == Order.Descending)
+                    else if (_list[index].CompareTo(_list[childIndex]) > 0 && _order == Order.Descending)
                     {
-                        Swap(index, index * 2 + 1);
-                        index = index * 2 + 1;
+                        Swap(index, childIndex);
+                        index = childIndex;
                     }
                     else
                         break;
@@ -121,7 +122,8 @@ namespace API.Util
             int parent = 0;
             while (true)
             {
-                if (index <= 0) break;
+                if (index <= 0)
+                    break;
                 parent = (index - 1) / 2;
                 var order = _list[index].CompareTo(_list[parent]);
                 if (_order == Order.Ascending && order > 0)
@@ -141,19 +143,21 @@ namespace API.Util
         public T Peek()
         {
             if (_list.Count == 0)
-            {
                 throw new IndexOutOfRangeException();
-            }
             return _list[0];
+        }
+        public T this[int index]
+        {
+            get=> _list[index];
         }
         public T[] ToArray()
         {
             return _list.ToArray();
         }
-        private void Swap(int index, int parent)
+        private void Swap(int child, int parent)
         {
-            var temp = _list[index];
-            _list[index] = _list[parent];
+            var temp = _list[child];
+            _list[child] = _list[parent];
             _list[parent] = temp;
         }
     }

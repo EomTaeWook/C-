@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace API.Util.DesignPattern
+namespace API.Util.Common
 {
     public class Singleton<T> where T : class, new()
     {
