@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace API.Util
+namespace API.Util.Collections
 {
     public class SyncQueue<T> : IDisposable
     {
@@ -35,9 +35,7 @@ namespace API.Util
             {
                 Monitor.Enter(_append);
                 for (int i = 0; i < items.Length; i++)
-                {
                     _queue.Enqueue(items[i]);
-                }
             }
             finally
             {
@@ -51,14 +49,8 @@ namespace API.Util
             {
                 Monitor.Enter(_read);
                 if (_queue.Count < 1)
-                {
                     throw new IndexOutOfRangeException();
-                }
                 return _queue.Peek();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
             }
             finally
             {
@@ -71,14 +63,8 @@ namespace API.Util
             {
                 Monitor.Enter(_read);
                 if (_queue.Count < offset + length)
-                {
                     throw new IndexOutOfRangeException();
-                }
                 return _queue.Skip(offset).Take(length).ToArray();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
             }
             finally
             {
@@ -87,21 +73,17 @@ namespace API.Util
         }
         public T Read()
         {
-            T item;
             try
             {
                 Monitor.Enter(_read);
                 if (_queue.Count == 0)
-                {
                     throw new IndexOutOfRangeException();
-                }
-                item = _queue.Dequeue();
+                return _queue.Dequeue();
             }
             finally
             {
                 Monitor.Exit(_read);
             }
-            return item;
         }
         public T[] Read(uint size)
         {
@@ -110,14 +92,10 @@ namespace API.Util
             {
                 Monitor.Enter(_read);
                 if (_queue.Count < size)
-                {
                     throw new IndexOutOfRangeException();
-                }
                 items = new T[size];
                 for (int i = 0; i < size; i++)
-                {
                     items[i] = _queue.Dequeue();
-                }
             }
             finally
             {

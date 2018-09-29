@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace API.Util
+namespace API.Util.Collections
 {
     public class DoubleBuffer<T>
     {

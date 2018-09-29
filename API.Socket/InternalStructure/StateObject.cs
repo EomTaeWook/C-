@@ -1,5 +1,6 @@
 ﻿using API.Socket.InternalStructure;
 using API.Util;
+using API.Util.Collections;
 using System;
 using System.Net.Sockets;
 using System.Threading;

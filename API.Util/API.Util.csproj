@@ -46,11 +46,11 @@
     <Compile Include="Logger\EnumLogger.cs" />
     <Compile Include="Logger\FileLogger.cs" />
     <Compile Include="Logger\LogMessage.cs" />
-    <Compile Include="SyncQueue.cs" />
-    <Compile Include="DoubleBuffer.cs" />
+    <Compile Include="Collections\SyncQueue.cs" />
+    <Compile Include="Collections\DoubleBuffer.cs" />
     <Compile Include="MemoryPool.cs" />
     <Compile Include="ObjectConverter.cs" />
-    <Compile Include="PriorityQueue.cs" />
+    <Compile Include="Collections\PriorityQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

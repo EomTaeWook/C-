@@ -1,5 +1,6 @@
 ﻿using API.Socket.InternalStructure;
 using API.Util;
+using API.Util.Collections;
 using API.Util.Logger;
 using System;
 using System.Collections.Concurrent;
@@ -18,61 +19,9 @@ namespace Test
         static TestClient _client;
         static void Main(string[] args)
         {
-            FileLogger.Instance().Init(LoggerPeriod.Hour);
-
-            PriorityQueue<long> test = new PriorityQueue<long>(Order.Ascending);
-
-            test.Append(1);
-            test.Append(3);
-            test.Append(7);
-            test.Append(6);
-            test.Append(13);
-            test.Append(9);
-            test.Append(15);
-            test.Append(20);
-
-            int cycle = 1;
-            while (true)
-            {
-                Parallel.For(0, 10000, r =>
-                {
-                    //test.Append(r);
-                    FileLogger.Instance().Write($"한글 테스트 : { r }");
-                });
-
-                //for (int r=0; r<50; r++)
-                //{
-                //    FileLogger.Instance().Write($"한글 테스트 : { r }");
-                //}
-                //foreach (var item in test)
-                //{
-                //    Console.Write(item + " ");
-                //}
-                //Console.WriteLine();
-                //while (test.Count > 0)
-                //{
-                //    var t = test.Read();
-                //    Console.WriteLine($"Read : {t}");
-                //    Trace.WriteLine(t);
-                //}
-                Thread.Sleep(10);
-                if (cycle > 2)
-                    break;
-                
-            }
+            SyncQueue<int> queue = new SyncQueue<int>();
+            List<int> List = new List<int>();
             
-
-            while(test.Count> 0)
-            {
-                foreach (var item in test)
-                {
-                    Console.Write(item + " ");
-                }
-                var i = test.Read();
-                Console.WriteLine($"Read : {i}");
-                
-
-            }
 
 
             //Trace.WriteLine("test1234", "test");

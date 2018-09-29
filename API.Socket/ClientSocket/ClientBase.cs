@@ -28,7 +28,12 @@ namespace API.Socket.ClientSocket
         protected ClientBase()
         {
             _closePeerObj = new object();
-            Init();
+            _stateObject = new StateObject();
+            _ioEvent = new SocketAsyncEventArgs();
+
+            _ioEvent.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
+            _ioEvent.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
+            _ioEvent.UserToken = _stateObject;
         }
         public void Close()
         {
@@ -39,7 +44,8 @@ namespace API.Socket.ClientSocket
         {
             try
             {
-                if (IsConnect()) return;
+                if (IsConnect())
+                    return;
                 this.ip = ip;
                 this.port = port;
                 _remoteEP = new IPEndPoint(IPAddress.Parse(ip), port);
@@ -121,22 +127,6 @@ namespace API.Socket.ClientSocket
         {
             if (e.LastOperation == SocketAsyncOperation.Receive)
                 ProcessReceive(e);
-        }
-
-        private void Init()
-        {
-            try
-            {
-                _stateObject = new StateObject();
-                _ioEvent = new SocketAsyncEventArgs();
-                _ioEvent.Completed += new EventHandler<SocketAsyncEventArgs>(Receive_Completed);
-                _ioEvent.SetBuffer(new byte[StateObject.BufferSize], 0, StateObject.BufferSize);
-                _ioEvent.UserToken = _stateObject;
-            }
-            catch (System.Exception ex)
-            {
-                throw new Exception.Exception(ex.Message);
-            }
         }
         protected void ClosePeer()
         {

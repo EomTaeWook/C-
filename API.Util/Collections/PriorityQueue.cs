@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace API.Util
+namespace API.Util.Collections
 {
     public enum Order
     {

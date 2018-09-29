@@ -6,37 +6,29 @@ namespace API.Util
 {
     public sealed class MemoryPool<T> : IDisposable where T : IDisposable, new()
     {
-        private int _count;
         private Queue<T> _pool;
         private readonly object _append, _read;
-        private Func<T> _createT;
+        private Func<T> _createCallback;
         private bool _disposed;
-        public MemoryPool(int count = 100, Func<T> func = null, bool autoCreate = true)
+        public int CurrentCount { get => _pool.Count; }
+        public int Count { get; private set; }
+
+        public MemoryPool()
         {
             _append = new object();
             _read = new object();
-            _pool = new Queue<T>(count);
-            _count = count;
-            if (func == null) _createT = () => new T();
-            else _createT = func;
-            if (autoCreate)
-            {
-                for (int i = 0; i < _count; i++)
-                {
-                    _pool.Enqueue(_createT());
-                }
-            }
+            _pool = new Queue<T>();
         }
         public void Init(int count, Func<T> func)
         {
-            _count = count;
-            _createT = func;
-            if (func == null) _createT = () => new T();
-            else _createT = func;
-            for (int i = 0; i < _count; i++)
-            {
-                _pool.Enqueue(_createT());
-            }
+            Count = count;
+            _createCallback = func;
+            if (func == null)
+                _createCallback = () => new T();
+            else
+                _createCallback = func;
+            for (int i = 0; i < Count; i++)
+                _pool.Enqueue(_createCallback());
         }
         public T Pop()
         {
@@ -44,9 +36,7 @@ namespace API.Util
             {
                 Monitor.Enter(_read);
                 if (_pool.Count < 1)
-                {
-                    return _createT();
-                }
+                    return _createCallback();
                 return _pool.Dequeue();
             }
             finally
@@ -59,15 +49,10 @@ namespace API.Util
             try
             {
                 Monitor.Enter(_append);
-                if (_pool.Count < _count)
-                {
+                if (_pool.Count < Count)
                     _pool.Enqueue(data);
-                }
                 else
-                {
                     data.Dispose();
-                    data = default(T);
-                }
             }
             finally
             {
@@ -76,25 +61,14 @@ namespace API.Util
         }
         private void Dispose(bool isDispose)
         {
-            if(Monitor.TryEnter(this))
+            for (int i = 0; i < _pool.Count; i++)
             {
-                try
-                {
-                    _disposed = isDispose;
-                    for (int i = 0; i < _pool.Count; i++)
-                    {
-                        var data = _pool.Dequeue();
-                        data.Dispose();
-                        data = default(T);
-                    }
-                    _pool.Clear();
-                    _pool = null;
-                }
-                finally
-                {
-                    Monitor.Exit(this);
-                }
+                var data = _pool.Dequeue();
+                data.Dispose();
             }
+            _pool.Clear();
+            _pool = null;
+            _disposed = isDispose;
         }
         public void Dispose()
         {
@@ -102,7 +76,5 @@ namespace API.Util
                 return;
             Dispose(true);
         }
-        public int CurrentCount { get => _pool.Count; }
-        public int Count { get => _count; }
     }
 }

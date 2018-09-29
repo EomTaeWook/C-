@@ -27,9 +27,7 @@ namespace API.Util
             Marshal.FreeHGlobal(ptr);
 
             if (Marshal.SizeOf(obj) != data.Length)
-            {
                 return default(T);
-            }
             return obj;
         }
     }

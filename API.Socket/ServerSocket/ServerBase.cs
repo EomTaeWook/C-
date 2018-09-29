@@ -13,7 +13,7 @@ namespace API.Socket.ServerSocket
 {
     public abstract class ServerBase
     {
-        private bool _isRunning;
+        private bool _isStart;
         private ManualResetEvent _allDone;
         private MemoryPool<SocketAsyncEventArgs> _ioEventPool;
         private SocketAsyncEventArgs _acceptEvent;
@@ -22,8 +22,8 @@ namespace API.Socket.ServerSocket
 
         private Dictionary<ulong, SocketAsyncEventArgs> _useIOEvents;
         private SyncCount _acceptCount;
-        private readonly object _readMutex;
-        private readonly object _deleteMutex;
+        private readonly object _readSync;
+        private readonly object _deleteSync;
 
         #region abstract | virtual
         protected abstract void OnAccepted(StateObject state);
@@ -37,24 +37,20 @@ namespace API.Socket.ServerSocket
         protected ServerBase(int poolCount)
         {
             _acceptCount = new SyncCount();
-            _readMutex = new object();
-            _deleteMutex = new object();
-            _isRunning = false;
+            _readSync = new object();
+            _deleteSync = new object();
+            _isStart = false;
             _allDone = new ManualResetEvent(false);
-            _ioEventPool = new MemoryPool<SocketAsyncEventArgs>(poolCount, CreateSockEventArg);
+            _ioEventPool = new MemoryPool<SocketAsyncEventArgs>();
             _acceptEvent = new SocketAsyncEventArgs();
             _useIOEvents = new Dictionary<ulong, SocketAsyncEventArgs>();
 
             _acceptEvent.Completed += new EventHandler<SocketAsyncEventArgs>(Accept_Completed);
+
+            _ioEventPool.Init(poolCount - _ioEventPool.Count, CreateSockEvent);
         }
-        protected void SetSocketMemoryPool(int count)
-        {
-            if (count > _ioEventPool.Count)
-            {
-                _ioEventPool.Init(count - _ioEventPool.Count, CreateSockEventArg);
-            }
-        }
-        private SocketAsyncEventArgs CreateSockEventArg()
+        
+        private SocketAsyncEventArgs CreateSockEvent()
         {
             StateObject state = new StateObject();
             SocketAsyncEventArgs ioEvent = new SocketAsyncEventArgs();
@@ -66,29 +62,27 @@ namespace API.Socket.ServerSocket
         private void IO_Completed(object sender, SocketAsyncEventArgs e)
         {
             if (e.LastOperation == SocketAsyncOperation.Receive)
-            {
                 ProcessReceive(e);
-            }
         }
         private void BeginReceive(SocketAsyncEventArgs e)
         {
-            StateObject state = e.UserToken as StateObject;
+            var state = e.UserToken as StateObject;
             if (state.Socket != null)
             {
-                bool pending = state.Socket.ReceiveAsync(e);
+                var pending = state.Socket.ReceiveAsync(e);
                 if (!pending)
                     ProcessReceive(e);
             }
         }
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
-            StateObject state = e.UserToken as StateObject;
+            var state = e.UserToken as StateObject;
             try
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
 #if DEBUG
-                    Debug.WriteLine("handler {0}: Read {1}", state.Handle, e.BytesTransferred);
+                    Trace.WriteLine($"handler {state.Handle}: Read {e.BytesTransferred}");
 #endif
                     state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
                     OnRecieved(state);
@@ -99,16 +93,17 @@ namespace API.Socket.ServerSocket
                     return;
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                Trace.WriteLine(ex.Message);
                 state.ReceiveBuffer.Clear();
             }
             BeginReceive(e);
         }
         public void Close()
         {
-            _isRunning = false;
             _allDone.WaitOne();
+            _isStart = false;
             if (_useIOEvents != null)
             {
                 try
@@ -131,14 +126,13 @@ namespace API.Socket.ServerSocket
         }
         private void StartListening()
         {
-            _isRunning = true;
-            System.Net.Sockets.Socket listener = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             try
             {
+                var listener = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 listener.Bind(_iPEndPoint);
                 listener.Listen(200);
-
-                while (_isRunning)
+                _isStart = true;
+                while (_isStart)
                 {
                     _acceptEvent.AcceptSocket = null;
                     _allDone.Reset();
@@ -160,7 +154,6 @@ namespace API.Socket.ServerSocket
             if (e.SocketError == SocketError.Success)
             {
                 var io = _ioEventPool.Pop();
-
                 state = (io.UserToken as StateObject);
                 try
                 {
@@ -175,11 +168,12 @@ namespace API.Socket.ServerSocket
                     };
                     state.Socket.IOControl(IOControlCode.KeepAliveValues, option.GetBytes(), null);
                     AddPeer(io);
+                    OnAccepted(state);
                     BeginReceive(io);
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.WriteLine("Accept Exception : " + ex.Message);
+                    Trace.WriteLine("Accept Exception : " + ex.Message);
                     ClosePeer(state);
                 }
                 finally
@@ -194,21 +188,23 @@ namespace API.Socket.ServerSocket
             {
                 try
                 {
-                    Monitor.Enter(_readMutex);
+                    Monitor.Enter(_readSync);
                     var state = (ioEvent.UserToken as StateObject);
                     if (_useIOEvents.ContainsKey(state.Handle))
-                        return;
+                    {
+                        ClosePeer(_useIOEvents[state.Handle].UserToken as StateObject);
+                        _useIOEvents.Remove(state.Handle);
+                    }
                     _useIOEvents.Add(state.Handle, ioEvent);
-                    OnAccepted(state);
                 }
                 finally
                 {
-                    Monitor.Exit(_readMutex);
+                    Monitor.Exit(_readSync);
                 }
             }
-            catch (Exception.Exception ex)
+            catch (System.Exception ex)
             {
-                throw new Exception.Exception(ex.Message);
+                Trace.WriteLine(ex.Message);
             }
         }
         public void Reject(StateObject handler)
@@ -219,7 +215,7 @@ namespace API.Socket.ServerSocket
         {
             try
             {
-                Monitor.Enter(_deleteMutex);
+                Monitor.Enter(_deleteSync);
                 ulong handle = state.Handle;
                 if (_useIOEvents.ContainsKey(state.Handle))
                 {
@@ -231,7 +227,7 @@ namespace API.Socket.ServerSocket
             }
             finally
             {
-                Monitor.Exit(_deleteMutex);
+                Monitor.Exit(_deleteSync);
             }
         }
         private void Init(string ip, int port)
@@ -245,7 +241,7 @@ namespace API.Socket.ServerSocket
             }
             catch (System.Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Trace.WriteLine(ex.Message);
             }
         }
         protected void Start(string ip, int port)
@@ -261,7 +257,7 @@ namespace API.Socket.ServerSocket
             }
             catch (System.Exception ex)
             {
-                Debug.Write(ex.Message);
+                Trace.Write(ex.Message);
                 throw new Exception.Exception(ex.Message);
             }
         }
