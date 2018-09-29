@@ -60,7 +60,7 @@ namespace API.Socket.InternalStructure
         {
             try
             {
-                if (_sendBuffer.Count() <= 0)
+                if (_sendBuffer.Count <= 0)
                 {
                     _sendBuffer.Append(packet);
                     BeginSend();
@@ -98,7 +98,7 @@ namespace API.Socket.InternalStructure
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
                     _sendBuffer.Read().Dispose();
-                    if (_sendBuffer.Count() > 0)
+                    if (_sendBuffer.Count > 0)
                     {
                         BeginSend();
                     }

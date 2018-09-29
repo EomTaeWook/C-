@@ -9,11 +9,16 @@ namespace API.Util.Collections
         Ascending,
         Descending
     }
-    public class PriorityQueue<T> : IEnumerable<T> where T : IComparable<T>
+    public class PriorityQueue<T> : IEnumerable<T>, ICollection<T> where T : IComparable<T>
     {
         private List<T> _list;
         private readonly Order _order;
-        public PriorityQueue(Order order = Order.Ascending)
+        private bool _disposed;
+        public int Count => _list.Count;
+        public PriorityQueue() : this(Order.Ascending)
+        {
+        }
+        public PriorityQueue(Order order)
         {
             _list = new List<T>();
             _order = order;
@@ -25,10 +30,6 @@ namespace API.Util.Collections
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _list.GetEnumerator();
-        }
-        public int Count
-        {
-            get => _list.Count;
         }
         public void Clear()
         {
@@ -59,25 +60,15 @@ namespace API.Util.Collections
                 {
                     var compare = _list[index * 2 + 1].CompareTo(_list[index * 2 + 2]);
                     if (compare > 0 && _order == Order.Ascending)
-                    {
                         childIndex = index * 2 + 1;
-                    }
                     else if (compare < 0 && _order == Order.Ascending)
-                    {
                         childIndex = index * 2 + 2;
-                    }
                     else if (compare < 0 && _order == Order.Descending)
-                    {
                         childIndex = index * 2 + 1;
-                    }
                     else if (compare > 0 && _order == Order.Descending)
-                    {
                         childIndex = index * 2 + 2;
-                    }
                     else if(compare == 0)
-                    {
                         childIndex = index * 2 + 1;
-                    }
 
                     if (_list[index].CompareTo(_list[childIndex]) < 0 && _order == Order.Ascending)
                     {
@@ -111,11 +102,10 @@ namespace API.Util.Collections
                 }
                 else
                     break;
-
             }
             return item;
         }
-        public void Append(T item)
+        public ICollection<T> Append(T item)
         {
             _list.Add(item);
             int index = _list.Count - 1;
@@ -125,13 +115,13 @@ namespace API.Util.Collections
                 if (index <= 0)
                     break;
                 parent = (index - 1) / 2;
-                var order = _list[index].CompareTo(_list[parent]);
-                if (_order == Order.Ascending && order > 0)
+                var compare = _list[index].CompareTo(_list[parent]);
+                if (_order == Order.Ascending && compare > 0)
                 {
                     Swap(index, parent);
                     index = parent;
                 }
-                else if (_order == Order.Descending && order < 0)
+                else if (_order == Order.Descending && compare < 0)
                 {
                     Swap(index, parent);
                     index = parent;
@@ -139,6 +129,36 @@ namespace API.Util.Collections
                 else
                     break;
             }
+            return this;
+        }
+        public ICollection<T> Append(T[] items)
+        {
+            foreach(var item in items)
+            {
+                _list.Add(item);
+                int index = _list.Count - 1;
+                int parent = 0;
+                while (true)
+                {
+                    if (index <= 0)
+                        break;
+                    parent = (index - 1) / 2;
+                    var order = _list[index].CompareTo(_list[parent]);
+                    if (_order == Order.Ascending && order > 0)
+                    {
+                        Swap(index, parent);
+                        index = parent;
+                    }
+                    else if (_order == Order.Descending && order < 0)
+                    {
+                        Swap(index, parent);
+                        index = parent;
+                    }
+                    else
+                        break;
+                }
+            }
+            return this;
         }
         public T Peek()
         {
@@ -159,6 +179,17 @@ namespace API.Util.Collections
             var temp = _list[child];
             _list[child] = _list[parent];
             _list[parent] = temp;
+        }
+        private void Dispose(bool disposed)
+        {
+            _list.Clear();
+            _list = null;
+            _disposed = disposed;
+        }
+        public void Dispose()
+        {
+            if(!_disposed)
+                Dispose(true);
         }
     }
 }

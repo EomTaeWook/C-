@@ -37,7 +37,7 @@ namespace Test
 
         protected override void OnRecieved(StateObject state)
         {
-            uint count = (uint)state.ReceiveBuffer.Count();
+            uint count = (uint)state.ReceiveBuffer.Count;
             var receive = state.ReceiveBuffer.Read(count);
             //state.ReceiveBuffer.Clear();
             //Console.WriteLine($"[ {DateTime.Now} ] Recieved : " + count.ToString());//System.Text.Encoding.UTF8.GetString(receive));

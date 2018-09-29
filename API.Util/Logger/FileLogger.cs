@@ -15,23 +15,25 @@ namespace API.Util.Logger
         private LoggerPeriod _period;
         private string _path;
         private readonly string _moduleName;
-        private PriorityQueue<LogMessage> _queue;
+        private DoublePriorityQueue<LogMessage> _queue;
         private FileStream _fs;
-        private readonly object _sync;
+        private readonly object _append, _write;
         public FileLogger()
         {
             _moduleName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
-            _queue = new PriorityQueue<LogMessage>(Order.Descending);
-            _sync = new object();
+            _queue = new DoublePriorityQueue<LogMessage>(Order.Descending);
+            _append = new object();
+            _write = new object();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
         }
 
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             Invoke(null);
+            _queue.Swap();
+            Invoke(null);
             _fs.Close();
         }
-
         public void Init(LoggerPeriod period = LoggerPeriod.Infinitely, string path = "")
         {
             _period = period;
@@ -45,29 +47,29 @@ namespace API.Util.Logger
         }
         public void Write(string message)
         {
+            if (_fs == null)
+                throw new InvalidOperationException("LoggerPeriod Not Initialization");
             try
             {
-                Monitor.Enter(_sync);
-                if (_queue.Count == 0)
+                Monitor.Enter(_append);
+                _queue.AppendQueue.Append(new LogMessage() { Message = message });
+                if (_queue.ReadQueue.Count == 0)
                 {
-                    _queue.Append(new LogMessage()
-                    {
-                        Message = message
-                    });
+                    _queue.Swap();
                     ThreadPool.QueueUserWorkItem(Invoke);
                 }
-                else
-                    _queue.Append(new LogMessage() { Message = message });
             }
             finally
             {
-                Monitor.Exit(_sync);
+                Monitor.Exit(_append);
             }
         }
         private void WriteMessage(LogMessage message)
         {
             string format = $"[{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}] { message.Message}\r\n";
+#if DEBUG
             Trace.Write(format);
+#endif
             var bytes = Encoding.UTF8.GetBytes(format);
             _fs.Write(bytes, 0, bytes.Count());
             _fs.Flush();
@@ -99,12 +101,12 @@ namespace API.Util.Logger
         {
             if(DateTimeOffset.Now.Hour != _time.Hour)
             {
-                while(_queue.Count > 0)
+                while(_queue.ReadQueue.Count > 0)
                 {
-                    var message = _queue.Peek();
+                    var message = _queue.ReadQueue.Peek();
                     if (message.CreateTime.Hour != _time.Hour)
                         break;
-                    message = _queue.Read();
+                    message = _queue.ReadQueue.Read();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -115,12 +117,12 @@ namespace API.Util.Logger
         {
             if (DateTimeOffset.Now.Day != _time.Day)
             {
-                while (_queue.Count > 0)
+                while (_queue.ReadQueue.Count > 0)
                 {
-                    var message = _queue.Peek();
+                    var message = _queue.ReadQueue.Peek();
                     if (message.CreateTime.Day != _time.Day)
                         break;
-                    message = _queue.Read();
+                    message = _queue.ReadQueue.Read();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -129,27 +131,29 @@ namespace API.Util.Logger
         }
         private void Invoke(object state)
         {
-            try
+            if(Monitor.TryEnter(_write))
             {
-                Monitor.Enter(_sync);
-                while (_queue.Count > 0)
+                try
                 {
-                    switch (_period)
+                    while (_queue.ReadQueue.Count > 0)
                     {
-                        case LoggerPeriod.Day:
-                            DayCompare();
-                            break;
-                        case LoggerPeriod.Hour:
-                            HourCompare();
-                            break;
+                        switch (_period)
+                        {
+                            case LoggerPeriod.Day:
+                                DayCompare();
+                                break;
+                            case LoggerPeriod.Hour:
+                                HourCompare();
+                                break;
+                        }
+                        var message = _queue.ReadQueue.Read();
+                        WriteMessage(message);
                     }
-                    var message = _queue.Read();
-                    WriteMessage(message);
                 }
-            }
-            finally
-            {
-                Monitor.Exit(_sync);
+                finally
+                {
+                    Monitor.Exit(_write);
+                }
             }
         }
     }

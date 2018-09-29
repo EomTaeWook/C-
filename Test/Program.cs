@@ -19,10 +19,44 @@ namespace Test
         static TestClient _client;
         static void Main(string[] args)
         {
-            SyncQueue<int> queue = new SyncQueue<int>();
             List<int> List = new List<int>();
-            
 
+            DoublePriorityQueue<int> doubleBuffer = new DoublePriorityQueue<int>();
+            doubleBuffer.AppendQueue.Append(10);
+            FileLogger.Instance().Init(LoggerPeriod.Hour);
+            long count = 0;
+            PriorityQueue<long> queue = new PriorityQueue<long>(Order.Descending);
+            var start = DateTimeOffset.Now;
+
+            while (true)
+            {
+                //Parallel.For(0, 5000, r =>
+                //{
+                //    queue.Append(r);
+                //});
+                //Random r = new Random((int)(DateTime.Now.Ticks & 0x0000FFFF));
+
+                //for (int i=0; i<1000; i++)
+                //{
+                //    queue.Append(r.Next(0, 50));
+                //}
+                //while(queue.Count > 0)
+                //{
+                //    Trace.Write($"read {queue.Read()}\n");
+                //}
+                //Trace.Write("============================\n");
+                Parallel.For(0, 5000, r =>
+                {
+                    FileLogger.Instance().Write($"한글 테스트 : { r }");
+                });
+                if((DateTimeOffset.Now - start).Seconds > 1)
+                {
+                    Environment.Exit(0);
+                }
+                //FileLogger.Instance().Write($"한글 테스트 : { count++}");
+                //Thread.Sleep(10);
+            }
+            
 
             //Trace.WriteLine("test1234", "test");
             //float balance = 5;
@@ -57,7 +91,7 @@ namespace Test
             //_client.Send(new Packet(
             //            Encoding.Default.GetBytes($"<When one thinks of the labors which the the English have devoted to digging the tunnel under the Thames, the tremendous expenditure of energy involved, and then how a little accident may for a long time obstruct the entire enterprise, one will be able to form a fitting conception of this critical undertaking as a whole.>")));
 
-            long count = 0;
+            
             while (true)
             {
                 FileLogger.Instance().Write($"한글 테스트 : { count++}");

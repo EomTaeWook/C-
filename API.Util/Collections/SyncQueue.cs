@@ -5,18 +5,20 @@ using System.Threading;
 
 namespace API.Util.Collections
 {
-    public class SyncQueue<T> : IDisposable
+    public class SyncQueue<T> : ICollection<T>
     {
         private Queue<T> _queue;
         private bool _disposed;
         private readonly object _append, _read;
+        public int Count => _queue.Count;
+
         public SyncQueue()
         {
             _append = new object();
             _read = new object();
             _queue = new Queue<T>();
         }
-        public SyncQueue<T> Append(T item)
+        public ICollection<T> Append(T item)
         {
             try
             {
@@ -29,7 +31,7 @@ namespace API.Util.Collections
             }
             return this;
         }
-        public SyncQueue<T> Append(T[] items)
+        public ICollection<T> Append(T[] items)
         {
             try
             {
@@ -106,10 +108,6 @@ namespace API.Util.Collections
         public bool Contain(T item)
         {
             return _queue.Contains(item);
-        }
-        public int Count()
-        {
-            return _queue.Count;
         }
         public void Clear()
         {
