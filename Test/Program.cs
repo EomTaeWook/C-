@@ -22,11 +22,31 @@ namespace Test
             List<int> List = new List<int>();
 
             DoublePriorityQueue<int> doubleBuffer = new DoublePriorityQueue<int>();
-            doubleBuffer.AppendQueue.Append(10);
+            doubleBuffer.AppendQueue.Push(10);
             FileLogger.Instance().Init(LoggerPeriod.Hour);
             long count = 0;
             PriorityQueue<long> queue = new PriorityQueue<long>(Order.Descending);
             var start = DateTimeOffset.Now;
+
+            queue.Push(10);
+            queue.Push(9);
+            queue.Push(11);
+            queue.Push(9);
+            queue.Push(11);
+            queue.Push(9);
+            queue.Push(9);
+            queue.Push(11);
+
+            while(queue.Count > 0)
+            {
+                var read = queue.Pop();
+                foreach(var item in queue)
+                {
+                    Console.Write(item + " ");
+                }
+                Console.WriteLine($"read {read}");
+            }
+
 
             while (true)
             {

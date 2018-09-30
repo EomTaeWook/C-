@@ -5,7 +5,7 @@ namespace API.Util.Collections
 {
     public class DoublePriorityQueue<T> where T : IComparable<T>
     {
-        private readonly ICollection<T>[] _buffer;
+        private readonly ICollection<T>[] _queue;
         private byte _idx;
         private readonly object _sync;
         private readonly Order _order;
@@ -17,7 +17,7 @@ namespace API.Util.Collections
             _idx = 0;
             _sync = new object();
             _order = order;
-            _buffer = new ICollection<T>[] { new PriorityQueue<T>(order), new PriorityQueue<T>(order) };
+            _queue = new ICollection<T>[] { new PriorityQueue<T>(order), new PriorityQueue<T>(order) };
         }
         public void Swap()
         {
@@ -34,11 +34,11 @@ namespace API.Util.Collections
         }
         public ICollection<T> ReadQueue
         {
-            get => _buffer[_idx ^ 1];
+            get => _queue[_idx ^ 1];
         }
         public ICollection<T> AppendQueue
         {
-            get => _buffer[_idx];
+            get => _queue[_idx];
         }
     }
 }

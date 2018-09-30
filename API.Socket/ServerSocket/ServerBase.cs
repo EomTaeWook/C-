@@ -84,7 +84,7 @@ namespace API.Socket.ServerSocket
 #if DEBUG
                     Trace.WriteLine($"handler {state.Handle}: Read {e.BytesTransferred}");
 #endif
-                    state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
+                    state.ReceiveBuffer.Push(e.Buffer.Take(e.BytesTransferred).ToArray());
                     OnRecieved(state);
                 }
                 else

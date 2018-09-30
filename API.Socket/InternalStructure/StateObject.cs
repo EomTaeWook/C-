@@ -2,6 +2,7 @@
 using API.Util;
 using API.Util.Collections;
 using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -62,11 +63,11 @@ namespace API.Socket.InternalStructure
             {
                 if (_sendBuffer.Count <= 0)
                 {
-                    _sendBuffer.Append(packet);
+                    _sendBuffer.Push(packet);
                     BeginSend();
                     return;
                 }
-                _sendBuffer.Append(packet);
+                _sendBuffer.Push(packet);
             }
             catch (System.Exception)
             {
@@ -97,15 +98,16 @@ namespace API.Socket.InternalStructure
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
-                    _sendBuffer.Read().Dispose();
+                    _sendBuffer.Pop().Dispose();
                     if (_sendBuffer.Count > 0)
                     {
                         BeginSend();
                     }
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                Trace.WriteLine(ex.Message, "ProcessSend");
             }
         }
 

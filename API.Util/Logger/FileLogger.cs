@@ -48,11 +48,11 @@ namespace API.Util.Logger
         public void Write(string message)
         {
             if (_fs == null)
-                throw new InvalidOperationException("LoggerPeriod Not Initialization");
+                throw new InvalidOperationException("FileLogger Not Initialization");
             try
             {
                 Monitor.Enter(_append);
-                _queue.AppendQueue.Append(new LogMessage() { Message = message });
+                _queue.AppendQueue.Push(new LogMessage() { Message = message });
                 if (_queue.ReadQueue.Count == 0)
                 {
                     _queue.Swap();
@@ -106,7 +106,7 @@ namespace API.Util.Logger
                     var message = _queue.ReadQueue.Peek();
                     if (message.CreateTime.Hour != _time.Hour)
                         break;
-                    message = _queue.ReadQueue.Read();
+                    message = _queue.ReadQueue.Pop();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -122,7 +122,7 @@ namespace API.Util.Logger
                     var message = _queue.ReadQueue.Peek();
                     if (message.CreateTime.Day != _time.Day)
                         break;
-                    message = _queue.ReadQueue.Read();
+                    message = _queue.ReadQueue.Pop();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -146,8 +146,7 @@ namespace API.Util.Logger
                                 HourCompare();
                                 break;
                         }
-                        var message = _queue.ReadQueue.Read();
-                        WriteMessage(message);
+                        WriteMessage(_queue.ReadQueue.Pop());
                     }
                 }
                 finally

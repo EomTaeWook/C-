@@ -4,11 +4,6 @@ using System.Collections.Generic;
 
 namespace API.Util.Collections
 {
-    public enum Order
-    {
-        Ascending,
-        Descending
-    }
     public class PriorityQueue<T> : IEnumerable<T>, ICollection<T> where T : IComparable<T>
     {
         private List<T> _list;
@@ -43,20 +38,18 @@ namespace API.Util.Collections
         {
             _list.CopyTo(array, arrayIndex);
         }
-        public T Read()
+        public T Pop()
         {
             if (_list.Count == 0)
                 throw new IndexOutOfRangeException();
             T item = _list[0];
             _list[0] = _list[_list.Count - 1];
             _list.RemoveAt(_list.Count - 1);
-            int index = 0;
-            int childIndex = 0;
-            int size = _list.Count - 1;
+            int index = 0, childIndex = 0;
             while (true)
             {
                 //Left Node Right Node
-                if (size > index * 2 + 1 && size > index * 2 + 2)
+                if (_list.Count > index * 2 + 1 && _list.Count > index * 2 + 2)
                 {
                     var compare = _list[index * 2 + 1].CompareTo(_list[index * 2 + 2]);
                     if (compare > 0 && _order == Order.Ascending)
@@ -105,7 +98,7 @@ namespace API.Util.Collections
             }
             return item;
         }
-        public ICollection<T> Append(T item)
+        public ICollection<T> Push(T item)
         {
             _list.Add(item);
             int index = _list.Count - 1;
@@ -131,32 +124,11 @@ namespace API.Util.Collections
             }
             return this;
         }
-        public ICollection<T> Append(T[] items)
+        public ICollection<T> Push(T[] items)
         {
             foreach(var item in items)
             {
-                _list.Add(item);
-                int index = _list.Count - 1;
-                int parent = 0;
-                while (true)
-                {
-                    if (index <= 0)
-                        break;
-                    parent = (index - 1) / 2;
-                    var order = _list[index].CompareTo(_list[parent]);
-                    if (_order == Order.Ascending && order > 0)
-                    {
-                        Swap(index, parent);
-                        index = parent;
-                    }
-                    else if (_order == Order.Descending && order < 0)
-                    {
-                        Swap(index, parent);
-                        index = parent;
-                    }
-                    else
-                        break;
-                }
+                Push(item);
             }
             return this;
         }

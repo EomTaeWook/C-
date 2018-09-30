@@ -9,9 +9,9 @@ namespace API.Util.Collections
     public interface ICollection<T> : IDisposable
     {
         int Count { get; }
-        ICollection<T> Append(T item);
-        ICollection<T> Append(T[] items);
-        T Read();
+        ICollection<T> Push(T item);
+        ICollection<T> Push(T[] items);
+        T Pop();
         T Peek();
     }
 }

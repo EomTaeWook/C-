@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\EnumCollection.cs" />
     <Compile Include="Collections\ICollection.cs" />
     <Compile Include="Crypto\DesCrypto.cs" />
     <Compile Include="Common\Singleton.cs" />

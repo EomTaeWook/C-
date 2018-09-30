@@ -108,7 +108,7 @@ namespace API.Socket.ClientSocket
             {
                 if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)
                 {
-                    state.ReceiveBuffer.Append(e.Buffer.Take(e.BytesTransferred).ToArray());
+                    state.ReceiveBuffer.Push(e.Buffer.Take(e.BytesTransferred).ToArray());
                     OnRecieved(state);
                 }
                 else

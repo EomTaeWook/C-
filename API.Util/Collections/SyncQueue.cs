@@ -9,39 +9,39 @@ namespace API.Util.Collections
     {
         private Queue<T> _queue;
         private bool _disposed;
-        private readonly object _append, _read;
+        private readonly object _push, _pop;
         public int Count => _queue.Count;
 
         public SyncQueue()
         {
-            _append = new object();
-            _read = new object();
+            _push = new object();
+            _pop = new object();
             _queue = new Queue<T>();
         }
-        public ICollection<T> Append(T item)
+        public ICollection<T> Push(T item)
         {
             try
             {
-                Monitor.Enter(_append);
+                Monitor.Enter(_push);
                 _queue.Enqueue(item);
             }
             finally
             {
-                Monitor.Exit(_append);
+                Monitor.Exit(_push);
             }
             return this;
         }
-        public ICollection<T> Append(T[] items)
+        public ICollection<T> Push(T[] items)
         {
             try
             {
-                Monitor.Enter(_append);
+                Monitor.Enter(_push);
                 for (int i = 0; i < items.Length; i++)
                     _queue.Enqueue(items[i]);
             }
             finally
             {
-                Monitor.Exit(_append);
+                Monitor.Exit(_push);
             }
             return this;
         }
@@ -49,42 +49,42 @@ namespace API.Util.Collections
         {
             try
             {
-                Monitor.Enter(_read);
+                Monitor.Enter(_pop);
                 if (_queue.Count < 1)
                     throw new IndexOutOfRangeException();
                 return _queue.Peek();
             }
             finally
             {
-                Monitor.Exit(_read);
+                Monitor.Exit(_pop);
             }
         }
         public T[] Peek(int offset, int length)
         {
             try
             {
-                Monitor.Enter(_read);
+                Monitor.Enter(_pop);
                 if (_queue.Count < offset + length)
                     throw new IndexOutOfRangeException();
                 return _queue.Skip(offset).Take(length).ToArray();
             }
             finally
             {
-                Monitor.Exit(_read);
+                Monitor.Exit(_pop);
             }
         }
-        public T Read()
+        public T Pop()
         {
             try
             {
-                Monitor.Enter(_read);
+                Monitor.Enter(_pop);
                 if (_queue.Count == 0)
                     throw new IndexOutOfRangeException();
                 return _queue.Dequeue();
             }
             finally
             {
-                Monitor.Exit(_read);
+                Monitor.Exit(_pop);
             }
         }
         public T[] Read(uint size)
@@ -92,7 +92,7 @@ namespace API.Util.Collections
             T[] items = null;
             try
             {
-                Monitor.Enter(_read);
+                Monitor.Enter(_pop);
                 if (_queue.Count < size)
                     throw new IndexOutOfRangeException();
                 items = new T[size];
@@ -101,7 +101,7 @@ namespace API.Util.Collections
             }
             finally
             {
-                Monitor.Exit(_read);
+                Monitor.Exit(_pop);
             }
             return items;
         }
