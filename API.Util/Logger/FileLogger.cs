@@ -14,13 +14,12 @@ namespace API.Util.Logger
         private DateTimeOffset _time;
         private LoggerPeriod _period;
         private string _path;
-        private readonly string _moduleName;
+        private string _moduleName;
         private DoublePriorityQueue<LogMessage> _queue;
         private FileStream _fs;
         private readonly object _append, _write;
         public FileLogger()
         {
-            _moduleName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
             _queue = new DoublePriorityQueue<LogMessage>(Order.Descending);
             _append = new object();
             _write = new object();
@@ -34,12 +33,15 @@ namespace API.Util.Logger
             Invoke(null);
             _fs.Close();
         }
-        public void Init(LoggerPeriod period = LoggerPeriod.Infinitely, string path = "")
+        public void Init(LoggerPeriod period = LoggerPeriod.Infinitely, string moduleName = "", string path = "")
         {
             _period = period;
             _path = path;
+            _moduleName = moduleName;
             if (string.IsNullOrEmpty(_path))
                 _path = Environment.CurrentDirectory;
+            if(string.IsNullOrEmpty(_moduleName))
+                _moduleName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
             _path += @"\Log";
             if (!Directory.Exists(_path))
                 Directory.CreateDirectory(_path);
