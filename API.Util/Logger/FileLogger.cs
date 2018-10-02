@@ -29,7 +29,6 @@ namespace API.Util.Logger
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             Invoke(null);
-            _queue.Swap();
             Invoke(null);
             _fs.Close();
         }
@@ -56,10 +55,7 @@ namespace API.Util.Logger
                 Monitor.Enter(_append);
                 _queue.AppendQueue.Push(new LogMessage() { Message = message });
                 if (_queue.ReadQueue.Count == 0)
-                {
-                    _queue.Swap();
                     ThreadPool.QueueUserWorkItem(Invoke);
-                }
             }
             finally
             {
@@ -68,11 +64,13 @@ namespace API.Util.Logger
         }
         private void WriteMessage(LogMessage message)
         {
-            string format = $"[{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}] { message.Message}\r\n";
 #if DEBUG
+            string format = $"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} { message.Message} \r\n";
             Trace.Write(format);
-#endif
             var bytes = Encoding.UTF8.GetBytes(format);
+#else
+            var bytes = Encoding.UTF8.GetBytes($"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} { message.Message} \r\n");
+#endif
             _fs.Write(bytes, 0, bytes.Count());
             _fs.Flush();
         }
@@ -97,7 +95,7 @@ namespace API.Util.Logger
             _time = DateTimeOffset.Now;
             if (string.IsNullOrEmpty(fileName))
                 throw new InvalidOperationException("LoggerPeriod Not Initialization");
-            _fs = new FileStream($@"{_path}\{_moduleName} {fileName}", FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            _fs = new FileStream($@"{_path}\{_moduleName} {fileName}", FileMode.Append, FileAccess.Write, FileShare.ReadWrite, 4096);
         }
         private void HourCompare()
         {
@@ -137,6 +135,7 @@ namespace API.Util.Logger
             {
                 try
                 {
+                    _queue.Swap();
                     while (_queue.ReadQueue.Count > 0)
                     {
                         switch (_period)
