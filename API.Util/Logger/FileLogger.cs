@@ -74,11 +74,11 @@ namespace API.Util.Logger
         private void WriteMessage(IMessage message)
         {
 #if DEBUG
-            string format = $"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} { message.Message} \r\n";
+            string format = $"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}]{ message.Message}\r\n";
             Trace.Write(format);
             var bytes = Encoding.UTF8.GetBytes(format);
 #else
-            var bytes = Encoding.UTF8.GetBytes($"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} { message.Message} \r\n");
+            var bytes = Encoding.UTF8.GetBytes($"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")}] { message.Message}\r\n");
 #endif
             _fs.Write(bytes, 0, bytes.Count());
             _fs.Flush();

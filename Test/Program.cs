@@ -71,11 +71,13 @@ namespace Test
                 //    Trace.Write($"read {queue.Read()}\n");
                 //}
                 //Trace.Write("============================\n");
-                Parallel.For(0, 50000, r =>
+                Parallel.For(0, 200000, r =>
                 {
                     var time = DateTimeOffset.Now;
-                    _logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");
-                    //FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });
+                    //_logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");//16.5569
+                    FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });//15.15
+                    FileLogger.Instance().Write($"한글 테스트", time);
+                    FileLogger.Instance().Write($"한글 테스트");
                 });
                 //for (int i = 0; i < 100000; i++)
                 //{
@@ -83,7 +85,7 @@ namespace Test
                 //    var time = DateTimeOffset.Now;
                 //    FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });
                 //}
-                //FileLogger.Instance().Write($"한글 테스트 : { count++}");
+                //
                 //Thread.Sleep(10);
             }
             FileLogger.Instance().Close();
