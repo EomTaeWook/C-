@@ -50,7 +50,6 @@
     <Compile Include="InternalStructure\TcpKeepAlive.cs" />
     <Compile Include="InternalStructure\IPacket.cs" />
     <Compile Include="InternalStructure\SyncCount.cs" />
-    <Compile Include="InternalStructure\DefaultPacket.cs" />
     <Compile Include="InternalStructure\StateObject.cs" />
     <Compile Include="Exception\ErrorCode.cs" />
     <Compile Include="Exception\Exception.cs" />

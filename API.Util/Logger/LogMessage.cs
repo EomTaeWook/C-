@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace API.Util.Logger
 {
-    public class LogMessage : IComparable<LogMessage>
+    public class LogMessage : IMessage
     {
         public string Message { get; set; }
-        public DateTimeOffset CreateTime { get; private set; } = DateTimeOffset.Now;
+        public DateTimeOffset TimeStamp { get; set; }
 
-        public int CompareTo(LogMessage other)
+        public int CompareTo(IMessage other)
         {
-            return CreateTime.Ticks.CompareTo(other.CreateTime.Ticks);
+            return TimeStamp.Ticks.CompareTo(other.TimeStamp.Ticks);
         }
     }
 }

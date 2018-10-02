@@ -13,5 +13,6 @@ namespace API.Util.Collections
         ICollection<T> Push(T[] items);
         T Pop();
         T Peek();
+        void Clear();
     }
 }

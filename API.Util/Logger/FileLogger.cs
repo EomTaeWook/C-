@@ -15,21 +15,33 @@ namespace API.Util.Logger
         private LoggerPeriod _period;
         private string _path;
         private string _moduleName;
-        private DoublePriorityQueue<LogMessage> _queue;
+        private DoublePriorityQueue<IMessage> _queue;
         private FileStream _fs;
         private readonly object _append, _write;
+        private Thread _thread;
+        private AutoResetEvent _resetEvent;
+        private CancellationTokenSource _cts;
+        private bool _doWork;
         public FileLogger()
         {
-            _queue = new DoublePriorityQueue<LogMessage>(Order.Descending);
+            _queue = new DoublePriorityQueue<IMessage>(Order.Descending);
             _append = new object();
             _write = new object();
+            _thread = new Thread(Invoke);
+            _resetEvent = new AutoResetEvent(false);
+            _cts = new CancellationTokenSource();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            _doWork = false;
         }
-
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
-            Invoke(null);
-            Invoke(null);
+            Close();
+        }
+        public void Close()
+        {
+            _resetEvent.Set();
+            _cts.Cancel();
+            _thread.Join();
             _fs.Close();
         }
         public void Init(LoggerPeriod period = LoggerPeriod.Infinitely, string moduleName = "", string path = "")
@@ -45,24 +57,21 @@ namespace API.Util.Logger
             if (!Directory.Exists(_path))
                 Directory.CreateDirectory(_path);
             CreateLogFile();
+            _thread.Start();
         }
-        public void Write(string message)
+        public void Write(string message, DateTimeOffset? timeStamp = null)
+        {
+            Write(new LogMessage() { Message = message, TimeStamp = timeStamp ?? DateTime.Now });
+        }
+        public void Write(IMessage message)
         {
             if (_fs == null)
                 throw new InvalidOperationException("FileLogger Not Initialization");
-            try
-            {
-                Monitor.Enter(_append);
-                _queue.AppendQueue.Push(new LogMessage() { Message = message });
-                if (_queue.ReadQueue.Count == 0)
-                    ThreadPool.QueueUserWorkItem(Invoke);
-            }
-            finally
-            {
-                Monitor.Exit(_append);
-            }
+            _queue.Push(message);
+            if (!_doWork)
+                _resetEvent.Set();
         }
-        private void WriteMessage(LogMessage message)
+        private void WriteMessage(IMessage message)
         {
 #if DEBUG
             string format = $"[{DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} { message.Message} \r\n";
@@ -101,12 +110,12 @@ namespace API.Util.Logger
         {
             if(DateTimeOffset.Now.Hour != _time.Hour)
             {
-                while(_queue.ReadQueue.Count > 0)
+                while(_queue.ReadCount > 0)
                 {
-                    var message = _queue.ReadQueue.Peek();
-                    if (message.CreateTime.Hour != _time.Hour)
+                    var message = _queue.Peek();
+                    if (message.TimeStamp.Hour != _time.Hour)
                         break;
-                    message = _queue.ReadQueue.Pop();
+                    message = _queue.Pop();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -117,12 +126,12 @@ namespace API.Util.Logger
         {
             if (DateTimeOffset.Now.Day != _time.Day)
             {
-                while (_queue.ReadQueue.Count > 0)
+                while (_queue.ReadCount > 0)
                 {
-                    var message = _queue.ReadQueue.Peek();
-                    if (message.CreateTime.Day != _time.Day)
+                    var message = _queue.Peek();
+                    if (message.TimeStamp.Day != _time.Day)
                         break;
-                    message = _queue.ReadQueue.Pop();
+                    message = _queue.Pop();
                     WriteMessage(message);
                 }
                 _fs.Close();
@@ -131,12 +140,15 @@ namespace API.Util.Logger
         }
         private void Invoke(object state)
         {
-            if(Monitor.TryEnter(_write))
+            while(!_cts.IsCancellationRequested)
             {
-                try
+                _doWork = false;
+                _resetEvent.WaitOne(5000);
+                _doWork = true;
+                while (_queue.AppendCount > 0)
                 {
                     _queue.Swap();
-                    while (_queue.ReadQueue.Count > 0)
+                    while (_queue.ReadCount > 0)
                     {
                         switch (_period)
                         {
@@ -147,12 +159,8 @@ namespace API.Util.Logger
                                 HourCompare();
                                 break;
                         }
-                        WriteMessage(_queue.ReadQueue.Pop());
+                        WriteMessage(_queue.Pop());
                     }
-                }
-                finally
-                {
-                    Monitor.Exit(_write);
                 }
             }
         }

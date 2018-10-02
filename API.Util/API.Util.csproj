@@ -47,6 +47,7 @@
     <Compile Include="Common\Singleton.cs" />
     <Compile Include="Logger\EnumLogger.cs" />
     <Compile Include="Logger\FileLogger.cs" />
+    <Compile Include="Logger\IMessage.cs" />
     <Compile Include="Logger\LogMessage.cs" />
     <Compile Include="Collections\SyncQueue.cs" />
     <Compile Include="Collections\DoublePriorityQueue.cs" />
