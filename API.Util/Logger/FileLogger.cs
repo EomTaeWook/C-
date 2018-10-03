@@ -47,6 +47,8 @@ namespace API.Util.Logger
         }
         public void Init(LoggerPeriod period = LoggerPeriod.Infinitely, string moduleName = "", string path = "")
         {
+            if (_thread.IsAlive)
+                return;
             _period = period;
             _path = path;
             _moduleName = moduleName;
@@ -153,7 +155,7 @@ namespace API.Util.Logger
             while(!_cts.IsCancellationRequested)
             {
                 _doWork = false;
-                _trigger.WaitOne(5000);
+                _trigger.WaitOne();
                 _doWork = true;
                 while (_queue.AppendCount > 0)
                 {

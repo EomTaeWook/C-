@@ -49,6 +49,7 @@ namespace Test
             //    Console.WriteLine($"read {read}");
             //}
             FileLogger.Instance().Init(LoggerPeriod.Hour);
+            FileLogger.Instance().Init(LoggerPeriod.Hour);
             XmlConfigurator.Configure(new FileInfo("App.config"));
             var _logger = log4net.LogManager.GetLogger("Program");
             int count = 0;
@@ -71,14 +72,14 @@ namespace Test
                 //    Trace.Write($"read {queue.Read()}\n");
                 //}
                 //Trace.Write("============================\n");
-                Parallel.For(0, 200000, r =>
-                {
-                    var time = DateTimeOffset.Now;
-                    //_logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");//16.5569
-                    FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });//15.15
-                    //FileLogger.Instance().Write($"한글 테스트", time);
-                    //FileLogger.Instance().Write($"한글 테스트");
-                });
+                //Parallel.For(0, 200000, r =>
+                //{
+                //    var time = DateTimeOffset.Now;
+                //    //_logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");//16.5569
+                //    FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });//15.15
+                //    //FileLogger.Instance().Write($"한글 테스트", time);
+                //    //FileLogger.Instance().Write($"한글 테스트");
+                //});
                 //for (int i = 0; i < 100000; i++)
                 //{
                 //    //_logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");
@@ -88,7 +89,7 @@ namespace Test
                 //
                 //Thread.Sleep(10);
             }
-            FileLogger.Instance().Close();
+            //FileLogger.Instance().Close();
             var span = DateTimeOffset.Now - start;
             Console.WriteLine(span);
             Console.ReadKey();
