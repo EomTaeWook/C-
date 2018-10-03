@@ -21,7 +21,7 @@ namespace API.Util.Logger
         private Thread _thread;
         private AutoResetEvent _trigger;
         private CancellationTokenSource _cts;
-        private Action _PeriodCompare;
+        private Action _periodCompare;
         private bool _doWork;
         public FileLogger()
         {
@@ -62,10 +62,10 @@ namespace API.Util.Logger
             switch (_period)
             {
                 case LoggerPeriod.Day:
-                    _PeriodCompare = DayCompare;
+                    _periodCompare = DayCompare;
                     break;
                 case LoggerPeriod.Hour:
-                    _PeriodCompare = HourCompare;
+                    _periodCompare = HourCompare;
                     break;
             }
             CreateLogFile();
@@ -162,7 +162,7 @@ namespace API.Util.Logger
                     _queue.Swap();
                     while (_queue.ReadCount > 0)
                     {
-                        _PeriodCompare?.Invoke();
+                        _periodCompare?.Invoke();
                         WriteMessage(_queue.Pop());
                     }
                 }
