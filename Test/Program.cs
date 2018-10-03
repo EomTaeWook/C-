@@ -76,8 +76,8 @@ namespace Test
                     var time = DateTimeOffset.Now;
                     //_logger.Debug($"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>");//16.5569
                     FileLogger.Instance().Write(new LogMessage() { Message = $"한글 테스트 : <{time.ToString("HH:mm:ss.fff")}>", TimeStamp = time });//15.15
-                    FileLogger.Instance().Write($"한글 테스트", time);
-                    FileLogger.Instance().Write($"한글 테스트");
+                    //FileLogger.Instance().Write($"한글 테스트", time);
+                    //FileLogger.Instance().Write($"한글 테스트");
                 });
                 //for (int i = 0; i < 100000; i++)
                 //{

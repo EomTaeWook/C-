@@ -19,8 +19,9 @@ namespace API.Util.Logger
         private FileStream _fs;
         private readonly object _append, _write;
         private Thread _thread;
-        private AutoResetEvent _resetEvent;
+        private AutoResetEvent _trigger;
         private CancellationTokenSource _cts;
+        private Action _PeriodCompare;
         private bool _doWork;
         public FileLogger()
         {
@@ -28,7 +29,7 @@ namespace API.Util.Logger
             _append = new object();
             _write = new object();
             _thread = new Thread(Invoke);
-            _resetEvent = new AutoResetEvent(false);
+            _trigger = new AutoResetEvent(false);
             _cts = new CancellationTokenSource();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             _doWork = false;
@@ -39,7 +40,7 @@ namespace API.Util.Logger
         }
         public void Close()
         {
-            _resetEvent.Set();
+            _trigger.Set();
             _cts.Cancel();
             _thread.Join();
             _fs.Close();
@@ -56,6 +57,15 @@ namespace API.Util.Logger
             _path += @"\Log";
             if (!Directory.Exists(_path))
                 Directory.CreateDirectory(_path);
+            switch (_period)
+            {
+                case LoggerPeriod.Day:
+                    _PeriodCompare = DayCompare;
+                    break;
+                case LoggerPeriod.Hour:
+                    _PeriodCompare = HourCompare;
+                    break;
+            }
             CreateLogFile();
             _thread.Start();
         }
@@ -69,7 +79,7 @@ namespace API.Util.Logger
                 throw new InvalidOperationException("FileLogger Not Initialization");
             _queue.Push(message);
             if (!_doWork)
-                _resetEvent.Set();
+                _trigger.Set();
         }
         private void WriteMessage(IMessage message)
         {
@@ -143,22 +153,14 @@ namespace API.Util.Logger
             while(!_cts.IsCancellationRequested)
             {
                 _doWork = false;
-                _resetEvent.WaitOne(5000);
+                _trigger.WaitOne(5000);
                 _doWork = true;
                 while (_queue.AppendCount > 0)
                 {
                     _queue.Swap();
                     while (_queue.ReadCount > 0)
                     {
-                        switch (_period)
-                        {
-                            case LoggerPeriod.Day:
-                                DayCompare();
-                                break;
-                            case LoggerPeriod.Hour:
-                                HourCompare();
-                                break;
-                        }
+                        _PeriodCompare?.Invoke();
                         WriteMessage(_queue.Pop());
                     }
                 }
