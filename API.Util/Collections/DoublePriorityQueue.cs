@@ -8,7 +8,6 @@ namespace API.Util.Collections
         private readonly ICollection<T>[] _queue;
         private byte _idx;
         private readonly Order _order;
-        private readonly object _sync;
         private bool _disposed;
         public DoublePriorityQueue() : this(Order.Ascending)
         {
@@ -18,33 +17,16 @@ namespace API.Util.Collections
             _disposed = false;
             _idx = 0;
             _order = order;
-            _sync = new object();
             _queue = new ICollection<T>[] { new PriorityQueue<T>(order), new PriorityQueue<T>(order) };
         }
         public void Swap()
         {
-            try
-            {
-                Monitor.Enter(_sync);
-                if (ReadQueue.Count == 0)
-                    _idx ^= 1;
-            }
-            finally
-            {
-                Monitor.Exit(_sync);
-            }
+            if (ReadQueue.Count == 0)
+                _idx ^= 1;
         }
         public ICollection<T> Push(T item)
         {
-            try
-            {
-                Monitor.Enter(_sync);
-                AppendQueue.Push(item);
-            }
-            finally
-            {
-                Monitor.Exit(_sync);
-            }
+            AppendQueue.Push(item);
             return AppendQueue;
         }
         public T Peek()
@@ -54,19 +36,10 @@ namespace API.Util.Collections
 
         public ICollection<T> Push(T[] items)
         {
-            try
-            {
-                Monitor.Enter(_sync);
-                foreach(var item in items)
-                    AppendQueue.Push(item);
-            }
-            finally
-            {
-                Monitor.Exit(_sync);
-            }
+            foreach (var item in items)
+                AppendQueue.Push(item);
             return AppendQueue;
         }
-
         public T Pop()
         {
             return ReadQueue.Pop();

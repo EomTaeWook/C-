@@ -17,7 +17,7 @@ namespace API.Util.Logger
         private string _moduleName;
         private DoublePriorityQueue<IMessage> _queue;
         private FileStream _fs;
-        private readonly object _append, _write;
+        private readonly object _append;
         private Thread _thread;
         private AutoResetEvent _trigger;
         private CancellationTokenSource _cts;
@@ -27,7 +27,6 @@ namespace API.Util.Logger
         {
             _queue = new DoublePriorityQueue<IMessage>(Order.Descending);
             _append = new object();
-            _write = new object();
             _thread = new Thread(Invoke);
             _trigger = new AutoResetEvent(false);
             _cts = new CancellationTokenSource();
@@ -79,9 +78,17 @@ namespace API.Util.Logger
         {
             if (_fs == null)
                 throw new InvalidOperationException("FileLogger Not Initialization");
-            _queue.Push(message);
-            if (!_doWork)
-                _trigger.Set();
+            try
+            {
+                Monitor.Enter(_append);
+                _queue.Push(message);
+                if (!_doWork)
+                    _trigger.Set();
+            }
+            finally
+            {
+                Monitor.Exit(_append);
+            }
         }
         private void WriteMessage(IMessage message)
         {
@@ -159,7 +166,15 @@ namespace API.Util.Logger
                 _doWork = true;
                 while (_queue.AppendCount > 0)
                 {
-                    _queue.Swap();
+                    try
+                    {
+                        Monitor.Enter(_append);
+                        _queue.Swap();
+                    }
+                    finally
+                    {
+                        Monitor.Exit(_append);
+                    }                    
                     while (_queue.ReadCount > 0)
                     {
                         _periodCompare?.Invoke();
