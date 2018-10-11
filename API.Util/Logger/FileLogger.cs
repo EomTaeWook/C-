@@ -52,10 +52,9 @@ namespace API.Util.Logger
             _path = path;
             _moduleName = moduleName;
             if (string.IsNullOrEmpty(_path))
-                _path = Environment.CurrentDirectory;
+                _path = Environment.CurrentDirectory + @"\Log";
             if(string.IsNullOrEmpty(_moduleName))
                 _moduleName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
-            _path += @"\Log";
             if (!Directory.Exists(_path))
                 Directory.CreateDirectory(_path);
             switch (_period)
